@@ -8,7 +8,7 @@ biz_db:
         - MYSQL_ROOT_PASSWORD=my-secret-pw
 
 biz_apis:
-    build: .
+    image: biz-apis
     ports:
         - "8000:8000"
     links:
@@ -16,3 +16,56 @@ biz_apis:
     environment:
         - MYSQL_ROOT_PASSWORD=my-secret-pw
         - MYSQL_HOST=biz_db
+
+# TODO: Complete logic_proxy fields and check for errors 
+logic_proxy:
+    image: logic-proxy
+    links:
+	- biz_bd
+    volumes:
+	- /your/indexes/path:/apis/business-ecosystem-logic-proxy/indexes
+    environment:
+	- OAUTH2_CLIENT_ID:
+	- OAUTH2_CLIENT_SECRET:
+	- BIZ_ECOSYS_PORT:
+	- BIZ_ECOSYS_HOST:
+	- APIS_HOST:
+	- CHARGING_PORT:
+	- GLASSFISH_PORT:
+
+# TODO: Complete charging-backend fields and check for errors 
+charging_backend:
+    image: charging-backend
+    links:
+        - biz_bd
+    environment:
+	- OAUTH2_CLIENT_ID:
+	- OAUTH2_CLIENT_SECRET:
+	- BIZ_ECOSYS_PORT:
+	- BIZ_ECOSYS_HOST:
+	- PAYPAL_CLIENT_ID:
+	- PAYPAL_CLIENT_SECRET:
+	- CHARGING_PORT:
+	- GLASSFISH_PORT:
+	- ADMIN_EMAIL:
+	- EMAIL_USER:
+	- EMAIL_PASSWD:
+	- EMAIL_SERVER:
+	- EMAIL_SERVER_PORT:
+    volumes:
+	- /your/bills/path:/apis/business-ecosystem-charging-backend/src/media/bills
+	- /your/assets/path:/apis/business-ecosystem-charging-backend/src/media/assets
+	- /your/plugins/path:/apis/business-ecosystem-charging-backend/src/plugins
+
+biz_rss:
+    image: conwetlab/biz-ecosystem-rss
+    links:
+	- biz_bd
+    ports:
+	- "9999:8080"
+	- "4444:4848"
+	- "1111:8181"
+    environment:
+	- MYSQL_DBUSR=root
+	- MYSQL_DBPASSWORD=my-secret-pw
+	- MYSQL_HOST=biz_db
