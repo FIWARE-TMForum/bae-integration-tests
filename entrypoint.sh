@@ -1,49 +1,6 @@
 #!/usr/bin/env bash
 
 ################################## ENVIRONMENT VARIABLES NEEDED ############################
-
-if [ -z $PAYPAL_CLIENT_ID ];
-then
-    echo PAYPAL_CLIENT_ID environment variable not set
-    exit 1
-fi
-
-if [ -z $PAYPAL_CLIENT_SECRET ];
-then
-    echo PAYPAL_CLIENT_SECRET environment variable not set
-    exit 1
-fi
-
-if [ -z $ADMIN_EMAIL ];
-then
-    echo ADMIN_EMAIL environment variable not set
-    exit 1
-fi
-
-if [ -z $BIZ_ECOSYS_PORT ];
-then
-    echo BIZ_ECOSYS_PORT environment variable not set
-    exit 1
-fi
-
-if [ -z $BIZ_ECOSYS_HOST ];
-then
-    echo BIZ_ECOSYS_HOST environment variable not set
-    exit 1
-fi
-
-if [[ -z $OAUTH2_CLIENT_ID ]];
-then
-    echo OAUTH2_CLIENT_ID is not set
-    exit 1
-fi
-
-if [[ -z $OAUTH2_CLIENT_SECRET ]];
-then
-    echo OAUTH2_CLIENT_SECRET is not set
-    exit 1
-fi
-
 if [[ -z $MYSQL_ROOT_PASSWORD ]];
 then
     echo MYSQL_ROOT_PASSWORD is not set
@@ -85,8 +42,7 @@ function glassfish_related {
 
 ############################################################################################
 
-service mongodb start
-
+export PATH=$PATH:/glassfish4/glassfish/bin
 asadmin start-domain
 
 exec 8<>/dev/tcp/$MYSQL_HOST/3306
