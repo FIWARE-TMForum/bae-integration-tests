@@ -1,71 +1,82 @@
 biz_db:
-    image: mysql:latest
+    image: mysql:5.7.16
     ports:
         - "3333:3306"
     volumes:
         - /var/lib/mysql
     environment:
-        - MYSQL_ROOT_PASSWORD=my-secret-pw
+        - MYSQL_ROOT_PASSWORD=toor
+        - MYSQL_HOST=localhost
 
 biz_apis:
     image: biz-apis
     ports:
-        - "8000:8000"
+        - "8484:4848"
     links:
         - biz_db
     environment:
-        - MYSQL_ROOT_PASSWORD=my-secret-pw
+        - MYSQL_ROOT_PASSWORD=toor
         - MYSQL_HOST=biz_db
 
 # TODO: Complete logic_proxy fields and check for errors 
 logic_proxy:
     image: logic-proxy
     links:
-	- biz_bd
-    volumes:
-	- /your/indexes/path:/apis/business-ecosystem-logic-proxy/indexes
+        - biz_db
+        - biz_apis
+    ports:
+        - "8000:8000"
+    #volumes:
+    #   - /your/indexes/path:/apis/business-ecosystem-logic-proxy/indexes
     environment:
-	- OAUTH2_CLIENT_ID:
-	- OAUTH2_CLIENT_SECRET:
-	- BIZ_ECOSYS_PORT:
-	- BIZ_ECOSYS_HOST:
-	- APIS_HOST:
-	- CHARGING_PORT:
-	- GLASSFISH_PORT:
+        - OAUTH2_CLIENT_ID=5eb7188132734431b9ba72b921f2513e
+        - OAUTH2_CLIENT_SECRET=fdd18a72312e42cc8e0cd8046f162bc4
+        - BIZ_ECOSYS_PORT=8000
+        - BIZ_ECOSYS_HOST=localhost
+        - APIS_HOST=biz_apis
+        - CHARGING_PORT=8006
+        - CHARGING_HOST=charging_backend
+        - GLASSFISH_PORT=8080
+        - GLASSFISH_HOST=biz_apis
 
 # TODO: Complete charging-backend fields and check for errors 
 charging_backend:
     image: charging-backend
+    ports:
+        - "8006:8006"
     links:
-        - biz_bd
+        - biz_db
+        - biz_apis
     environment:
-	- OAUTH2_CLIENT_ID:
-	- OAUTH2_CLIENT_SECRET:
-	- BIZ_ECOSYS_PORT:
-	- BIZ_ECOSYS_HOST:
-	- PAYPAL_CLIENT_ID:
-	- PAYPAL_CLIENT_SECRET:
-	- CHARGING_PORT:
-	- GLASSFISH_PORT:
-	- ADMIN_EMAIL:
-	- EMAIL_USER:
-	- EMAIL_PASSWD:
-	- EMAIL_SERVER:
-	- EMAIL_SERVER_PORT:
-    volumes:
-	- /your/bills/path:/apis/business-ecosystem-charging-backend/src/media/bills
-	- /your/assets/path:/apis/business-ecosystem-charging-backend/src/media/assets
-	- /your/plugins/path:/apis/business-ecosystem-charging-backend/src/plugins
+        - BIZ_ECOSYS_PORT=8000
+        - BIZ_ECOSYS_HOST=logic_proxy
+        - PAYPAL_CLIENT_ID=your-paypal-client-id
+        - PAYPAL_CLIENT_SECRET=your-paypal-client-secret
+        - GLASSFISH_HOST=biz_apis
+        - GLASSFISH_PORT=8080
+        - ADMIN_EMAIL=eugenio90@gmail.com
+        - EMAIL_USER=
+        - EMAIL_PASSWD=
+        - EMAIL_SERVER=
+        - EMAIL_SERVER_PORT=
+    # volumes:
+    # 	- /your/bills/path:/apis/business-ecosystem-charging-backend/src/media/bills
+    # 	- /your/assets/path:/apis/business-ecosystem-charging-backend/src/media/assets
+    # 	- /your/plugins/path:/apis/business-ecosystem-charging-backend/src/plugins
 
 biz_rss:
     image: conwetlab/biz-ecosystem-rss
     links:
-	- biz_bd
+        - biz_db
+        - biz_apis
     ports:
-	- "9999:8080"
-	- "4444:4848"
-	- "1111:8181"
+        - "9999:8080"
+        - "4444:4848"
+        - "1111:8181"
     environment:
-	- MYSQL_DBUSR=root
-	- MYSQL_DBPASSWORD=my-secret-pw
-	- MYSQL_HOST=biz_db
+        - MYSQL_DBUSR=root
+        - MYSQL_DBPASSWORD=toor
+        - MYSQL_HOST=biz_db
+
+# selenium_tests:
+#     image: 
