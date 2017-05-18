@@ -19,7 +19,6 @@ describe('Integration tests', function () {
     // });
     
     beforeAll(function(done) {
-	jasmine.DEFAULT_TIMEOUT_INTERVAL = 100000;
 	browser.url('http://logic_proxy:8000/#/offering');
 	// DDBB must be cleaned from data, the only thing it should have is the schema.
     });
@@ -49,7 +48,7 @@ describe('Integration tests', function () {
         function waitUntilTitle(title, done) {
             browser.waitUntil(function() {
                 return browser.getTitle()  === title
-            }, 60000, "Expected title to be different", 10000);
+            }, 6000, "Expected title to be different", 1000);
             browser.call(done)
         }
 	
@@ -60,13 +59,10 @@ describe('Integration tests', function () {
             browser.setValue('[name=username]', user.id);
             browser.setValue('[name=password]', user.pass);
             browser.click('#frontpage > div > div.login > div > div > form > div.modal-footer > button');
-            browser.pause(6000)
-            //browser.waitForExist('body > div.navbar.navbar-default.navbar-fixed-top.z-depth-2 > div > div.navbar-text.ng-binding', 60000)
-	    waitUntilTitle('Biz Ecosystem', done);
-	    // var userLogged = browser.findElement(By.className("hidden-xs ng-binding"));
-	    browser.getText('.hidden-xs').then(function(name){
-		expect(name).toBe(expectedName);
-	    });
+            browser.waitForExist('body > div.navbar.navbar-default.navbar-fixed-top.z-depth-2 > div > div.navbar-text.ng-binding', 60000)
+            //browser.debug()
+	    var name = browser.getText('.has-stack > span:nth-child(2)');
+            expect(name).toBe(expectedName);
 	};
 
 	// function createProductSpec(browser, product, expectedProduct, done) {
