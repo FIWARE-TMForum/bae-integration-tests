@@ -1,37 +1,67 @@
 
-describe('Integration tests', function () {
+fdescribe('Integration tests', function () {
 
-    // var mysql = require('mysql');
-    // var connection = mysql.createConnection({
-    //     host: 'biz_db',
-    //     port: '3306'
-    //     user: 'root',
-    //     password: 'toor'
-    // });
+    var mysql = require('mysql');
+    var connection = mysql.createConnection({
+        host: 'biz_db',
+        port: '3306',
+        user: 'root',
+        password: 'toor',
+        multipleStatements: true
+    });
+
+    var dbases = ['DSBILLINGMANAGEMENT',
+                  'DSCUSTOMER',
+                  'DSPARTYMANAGEMENT',
+                  'DSPRODUCTCATALOG2',
+                  'DSPRODUCTINVENTORY',
+                  'DSPRODUCTORDERING',
+                  'DSUSAGEMANAGEMENT',
+                  'RSS'];
     
-    // connection.connect(function(err) {
-    //     if (err) {
-    //         console.error('error connecting: ' + err.stack);
-    //         return;
-    //     }
- 
-    //     console.log('connected as id ' + connection.threadId);
-    // });
-    
-    beforeAll(function(done) {
-	browser.url('http://logic_proxy:8000/#/offering');
+    beforeAll(function() {
+        connection.connect(function(err) {
+            if (err) {
+                console.error('error connecting: ' + err.stack);
+                return;
+            }
+            
+            console.log('connected as id ' + connection.threadId);
+        });
+	cleanDB()
 	// DDBB must be cleaned from data, the only thing it should have is the schema.
     });
     
     afterAll(function(done) {
-        browser.end(done)
+        connection.destroy();
+        browser.end(done);
 //	webdriverio.end();
     });
 
-    fdescribe('User.', function () {
+    function cleanDB() {
+        dbases.forEach(function(db) {
+            connection.query("SELECT CONCAT('TRUNCATE TABLE ', ?, '.', TABLE_NAME,';') AS truncateCommand FROM information_schema.TABLES WHERE TABLE_SCHEMA = ?;", [db, db], function(error, results, fields) {
+                if (error){
+                    console.log(error)
+                }
+                
+                results.forEach(function(obj) {
+                    connection.query("SET FOREIGN_KEY_CHECKS=0;", obj.truncateCommand, "SET FOREIGN_KEY_CHECKS=1;", function(err, res, flds) {
+                        if (err){
+                            console.log(err)
+                        }
+                        console.log(JSON.stringify(res))
+                    });
+                })
+                
+            })
+        });
+    };
 
-	beforeAll(function(done) {
-            
+    describe('User.', function () {
+
+	beforeAll(function() {
+            browser.url('http://logic_proxy:8000/#/offering');
 	    // Populate DDBB
 	});
 
@@ -60,9 +90,10 @@ describe('Integration tests', function () {
             browser.setValue('[name=password]', user.pass);
             browser.click('#frontpage > div > div.login > div > div > form > div.modal-footer > button');
             browser.waitForExist('body > div.navbar.navbar-default.navbar-fixed-top.z-depth-2 > div > div.navbar-text.ng-binding', 60000)
-            //browser.debug()
+            // browser.debug()
 	    var name = browser.getText('.has-stack > span:nth-child(2)');
             expect(name).toBe(expectedName);
+            //browser.call(done)
 	};
 
 	// function createProductSpec(browser, product, expectedProduct, done) {
@@ -152,93 +183,79 @@ describe('Integration tests', function () {
 	    checkLogin(userProvider, 'testfiware', done);
 	});
 
-	// it('Should be able to update his/her info', function(done) {
-	//     browser.findElement(By.className('dropdown-toggle has-stack')).click();
-	//     browser.findElement(By.id('Settings')).click();
-	    
-	//     // Change some of the values
-	//     var fieldName = browser.waitUntil(elementLocated(By.name('firstName')));
-	//     fieldName.clear();
-	//     fieldName.sendKeys('testName');
-	//     browser.findElement(By.name('lastName')).clear();
-	//     browser.findElement(By.name('lastName')).sendKeys('testSurName');
-	//     browser.findElement(By.className('btn btn-success')).click();
-	//     browser.waitUntil(elementLocated(By.className('h4 text-dark-secondary')))
-	//     var nameInput = browser.waitUntil(elementLocated(By.name('firstName')));
-	//     nameInput.getAttribute("value").then(function(firstName) {
-	// 	expect(firstName).toBe('testName');
-	// 	done();
-	//     })
-	// });
+	it('Should be able to update his/her info', function(done) {
+            browser.click('.dropdown-toggle.has-stack');
+            browser.click('[ui-sref=settings]');
+            
+            // Change some of the values
+            browser.waitForExist('[name=firstName]');
+            browser.setValue('[name=firstName]', 'testName');
+            browser.setValue('[name=lastName]', 'testSurName');
+            browser.click('.btn.btn-success');
+            browser.waitForExist('form.ng-pristine:nth-child(3) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > input:nth-child(2)');
+            var name = browser.getValue('[name=firstName]');
+            expect(name).toBe('testName');
+	});
+        
 
-	// it('Should be able to create a new category hierarchy', function(done) {
-	//     // Go to Admin page
-	//     browser.findElement(By.className('dropdown-toggle has-stack')).click();
-	//     browser.findElement(By.id('Admin')).click();
-	//     // Create a new parent category
-	//     browser.waitUntil(elementLocated(By.className('btn btn-success')));
-	//     foundCats = !!browser.findElements(By.linkText('testCategory1'));
-	//     if (!foundCats) {
-	//     	browser.findElement(By.className('btn btn-success')).click();
-	//     	var catName = browser.waitUntil(elementLocated(By.name('name')));
-	//     	catName.sendKeys('testCategory1');
-	//     	browser.findElement(By.name('description')).sendKeys('A testing description');
-	//     	browser.findElement(By.linkText('Next')).click();
-	//     	browser.waitUntil(elementLocated(By.className('h4 text-dark-secondary')));
-	//     	browser.findElement(By.className('btn btn-warning')).click();
-	//     	// TODO: Change this expect. This checks nothing
-	//     	browser.getTitle().then(function (title) {
-	//     	    expect(title).toBe('Biz Ecosystem');
-	// 	    done();
-	//     	});
-	//     }else{
-	// 	done();
-	//     }
-	// });
+	it('Should be able to create a new category hierarchy', function(done) {
+	    // Go to Admin page
+            browser.click('.dropdown-toggle.has-stack');
+            browser.click('[ui-sref=admin]');
+            browser.debug()
+
+	    // Create a new parent category
+            browser.waitForEnabled('.btn.btn-success')
+            browser.click('.btn.btn-success');
+            browser.waitForEnabled('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(1) > input:nth-child(2)');
+            browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(1) > input:nth-child(2)', 'testCategory1');
+            browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(2) > textarea:nth-child(2)', 'A testing description');
+            // Next
+            browser.click('form.ng-dirty > div:nth-child(4) > a:nth-child(1)');
+	    browser.waitForExist('.btn-warning');
+	    browser.click('.btn-warning');
+	    // TODO: Change this expect. This checks nothing
+	    var title = browser.getTitle()
+	    expect(title).toBe('Biz Ecosystem');
+	});
 
 	// it('Will try to create a new catalog. If the catalog already exists, he should be able to update the status of that catalog', function(done) {
-	//     browser.findElement(By.className('btn btn-default z-depth-1')).click();
+        //     browser.debug();
+        //     // My Stock
+        //     browser.click('[ui-sref=stock]')
+            
+            
 	//     browser.waitUntil(titleIs('Biz Ecosystem'));
 	//     browser.findElement(By.linkText('My stock')).click();
-	//     var foundCatalog = !!browser.waitUntil(elementLocated(By.linkText('testCata')));
-	//     if(foundCatalog){
-	// 	browser.findElement(By.linkText('testCata')).click();
-	// 	browser.findElement(By.className('btn btn-success')).click();
-	// 	browser.waitUntil(elementLocated(By.linkText('Home')));		
-	// 	// Selenium has a bug where it wont load the second instruction of a goTo("URL"). I dont even know why this work around works. But it does.
-	// 	// If Jesus can walk on water. Can he swim on land?
-	// 	browser.navigate().to("chrome://version/")
-	// 	browser.navigate().to("http://localhost:8000/#/offering")
+	//     // var foundCatalog = !!browser.waitUntil(elementLocated(By.linkText('testCata')));
+	//     // if(foundCatalog){
+	//     //     browser.findElement(By.linkText('testCata')).click();
+	//     //     browser.findElement(By.className('btn btn-success')).click();
+	//     //     browser.waitUntil(elementLocated(By.linkText('Home')));		
+	//     //     // Selenium has a bug where it wont load the second instruction of a goTo("URL"). I dont even know why this work around works. But it does.
+	//     //     // If Jesus can walk on water. Can he swim on land?
+	//     //     browser.navigate().to("chrome://version/")
+	//     //     browser.navigate().to("http://localhost:8000/#/offering")
 		
-	// 	browser.waitUntil(elementLocated(By.linkText('testCata')));
-	// 	foundCatalog = browser.findElement(By.linkText('testCata'));
-	// 	foundCatalog.then(x => x.getText().then(function(text) {
-	// 		expect(text).toBe('testCatalog23');
-	// 		done();
-	// 	}));
-	// 	// TODO
-	//     }else{
-	// 	browser.findElement(By.className('btn btn-success')).click();
-	// 	browser.waitUntil(elementLocated(By.name('name')));
-	// 	browser.findElement(By.name('name')).sendKeys('testCatalog21');
-	// 	browser.findElement(By.name('description')).sendKeys('A testing description');
-	// 	browser.findElement(By.linkText('Next')).click();
-	// 	browser.waitUntil(elementLocated(By.className('h4 text-dark-secondary')));
-	// 	browser.findElement(By.className('btn btn-warning')).click();	    
-	// 	browser.waitUntil(elementLocated(By.className('h4 text-dark-secondary')));
-	// 	var catalogName = browser.findElement(By.name("name"));
-	// 	catalogName.getAttribute("value").then(function(name){
-	// 	    // TODO
-	// 	});
-	// 	// browser.waitUntil(elementLocated(By.className('status-item status-launched')));
-	// 	// expect(name).toBe('testCatalog20');
-	// 	// var icon = browser.findElement(By.css("div.status-item.status-launched"));
-	// 	// browser
-	// 	//     .actions()
-	// 	//     .click(icon)
-	// 	//     .perform();
-	// 	browser.waitUntil(elementLocated(By.className('status-item status-launched active')));
-	//     }
+	//     //     browser.waitUntil(elementLocated(By.linkText('testCata')));
+	//     //     foundCatalog = browser.findElement(By.linkText('testCata'));
+	//     //     foundCatalog.then(x => x.getText().then(function(text) {
+	//     //     	expect(text).toBe('testCatalog23');
+	//     //     	done();
+	//     //     }));
+	//     // }else{
+        //     //     // TODO: Finish this branch
+        //     //     browser.click('.btn.btn-success');
+        //     //     browser.setValue('[name=name]', 'testCatalog1');
+        //     //     browser.setValue('[name=description]', 'A testing description');
+        //     //     browser.click('.btn.btn-default.z-depth-1');
+        //     //     browser.waitForExist('.btn.btn-warning');
+	//     //     browser.click('.btn.btn-warning');
+	//     //     // var catalogName = browser.findElement(By.name("name"));
+	//     //     // catalogName.getAttribute("value").then(function(name){
+	//     //     //     // TODO
+	//     //     // });
+	//     // }
 	// });
 
 	// xit('Create a new product Specification', function(done) {
