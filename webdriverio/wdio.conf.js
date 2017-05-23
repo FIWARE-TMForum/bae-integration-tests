@@ -114,7 +114,7 @@ exports.config = {
     baseUrl: 'http://logic_proxy:8000/#/offering',
     //
     // Default timeout for all waitForXXX commands.
-    waitforTimeout: 60000,
+    waitforTimeout: 60000000,
     //
     // Initialize the browser instance with a WebdriverIO plugin. The object should have the
     // plugin name as key and the desired plugin options as property. Make sure you have
@@ -163,7 +163,7 @@ exports.config = {
     jasmineNodeOpts: {
         //
         // Jasmine default timeout
-        defaultTimeoutInterval: 6000000,//(24 * 60 * 60 * 1000000000),
+        defaultTimeoutInterval: 24*60*60*60,
         //
         // The Jasmine framework allows it to intercept each assertion in order to log the state of the application
         // or website depending on the result. For example it is pretty handy to take a screenshot every time

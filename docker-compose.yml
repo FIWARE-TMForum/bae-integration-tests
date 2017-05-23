@@ -85,6 +85,7 @@ webdriverio:
             - logic_proxy
             - biz_db
             - biz_apis
+            - charging_backend
         environment:
             - HUB_PORT_4444_TCP_ADDR=hub
             - HUB_PORT_4444_TCP_PORT=4444

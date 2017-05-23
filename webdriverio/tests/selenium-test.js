@@ -7,7 +7,8 @@ fdescribe('Integration tests', function () {
         port: '3306',
         user: 'root',
         password: 'toor',
-        multipleStatements: true
+        multipleStatements: true//,
+        //debug: true
     });
 
     var dbases = ['DSBILLINGMANAGEMENT',
@@ -39,23 +40,26 @@ fdescribe('Integration tests', function () {
     });
 
     function cleanDB() {
+        console.log("Cleaning database")
         dbases.forEach(function(db) {
-            connection.query("SELECT CONCAT('TRUNCATE TABLE ', ?, '.', TABLE_NAME,';') AS truncateCommand FROM information_schema.TABLES WHERE TABLE_SCHEMA = ?;", [db, db], function(error, results, fields) {
+            connection.query("SELECT CONCAT('DELETE FROM ', ?, '.', TABLE_NAME,';') AS truncateCommand FROM information_schema.TABLES WHERE TABLE_SCHEMA = ?;", [db, db], function(error, results, fields) {
                 if (error){
-                    console.log(error)
+                    console.log("Database error while building the querys. Error: " + error)
                 }
                 
-                results.forEach(function(obj) {
-                    connection.query("SET FOREIGN_KEY_CHECKS=0;", obj.truncateCommand, "SET FOREIGN_KEY_CHECKS=1;", function(err, res, flds) {
-                        if (err){
-                            console.log(err)
-                        }
-                        console.log(JSON.stringify(res))
+                else if (results){
+                    console.log(JSON.stringify(results))
+                    results.forEach(function(obj) {
+                        connection.query(obj.truncateCommand, function(err, res, flds) {
+                            if (err){
+                                console.log("Database error while cleaning the tables. Error: " + err)
+                            }
+                        });
                     });
-                })
-                
-            })
+                }
+            });
         });
+        console.log("Database cleaned")
     };
 
     describe('User.', function () {
@@ -168,12 +172,11 @@ fdescribe('Integration tests', function () {
 	  As far as i know, these test must be passed in this order as they emulate user possible actions.
 	 */
 
-	// Use this as a placeholder for new tests. Doing all the tests is horrible enough without worrying about what
-	// html thing should be checked.
+	// Use this as a placeholder for new tests. Doing all the tests is horrible enough without worrying 
+	// about what html thing should be checked.
 	// // TODO: Change this expect. This checks nothing
-	// browser.getTitle().then(function (title) {
-	//     expect(title).toBe('Biz Ecosystem');
-	// });
+        // var title = browser.getTitle();
+	// expect(title).toBe('Biz Ecosystem');
 
 	
 	
@@ -202,61 +205,73 @@ fdescribe('Integration tests', function () {
 	    // Go to Admin page
             browser.click('.dropdown-toggle.has-stack');
             browser.click('[ui-sref=admin]');
-            browser.debug()
 
 	    // Create a new parent category
-            browser.waitForEnabled('.btn.btn-success')
+            browser.waitForEnabled('.btn.btn-success');
             browser.click('.btn.btn-success');
             browser.waitForEnabled('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(1) > input:nth-child(2)');
             browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(1) > input:nth-child(2)', 'testCategory1');
             browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(2) > textarea:nth-child(2)', 'A testing description');
             // Next
             browser.click('form.ng-dirty > div:nth-child(4) > a:nth-child(1)');
+            browser.debug()
 	    browser.waitForExist('.btn-warning');
 	    browser.click('.btn-warning');
-	    // TODO: Change this expect. This checks nothing
-	    var title = browser.getTitle()
-	    expect(title).toBe('Biz Ecosystem');
+            // List all categories
+            browser.waitForExist('.breadcrumb-triangle > a:nth-child(1) > span:nth-child(2)');
+            browser.click('.breadcrumb-triangle > a:nth-child(1) > span:nth-child(2)');
+            browser.waitForExist('strong.ng-binding');
+	    var category = browser.getText('strong.ng-binding');
+	    expect(category).toBe('testCategory1');
+            browser.click('.col-md-3 > ui-view:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a:nth-child(1)');
 	});
 
-	// it('Will try to create a new catalog. If the catalog already exists, he should be able to update the status of that catalog', function(done) {
-        //     browser.debug();
-        //     // My Stock
-        //     browser.click('[ui-sref=stock]')
+	it('Will try to create a new catalog.', function(done) {
+            // My Stock
+            browser.waitForExist('.bg-view3');
+            browser.click('.bg-view3');
+
+            // New
+            browser.waitForExist('.btn.btn-success');
+            browser.click('.btn.btn-success');
+
+            // 1. General
+            // browser.debug()
+            browser.waitForExist('[name=name]');
+            browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(1) > input:nth-child(2)', 'testCatalog1');
+            browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(2) > textarea:nth-child(2)', 'A testing description');
+            browser.click('.btn.btn-default.z-depth-1');
+            browser.waitForExist('.btn.btn-warning');
+	    browser.click('.btn.btn-warning');
             
-            
-	//     browser.waitUntil(titleIs('Biz Ecosystem'));
-	//     browser.findElement(By.linkText('My stock')).click();
-	//     // var foundCatalog = !!browser.waitUntil(elementLocated(By.linkText('testCata')));
-	//     // if(foundCatalog){
-	//     //     browser.findElement(By.linkText('testCata')).click();
-	//     //     browser.findElement(By.className('btn btn-success')).click();
-	//     //     browser.waitUntil(elementLocated(By.linkText('Home')));		
-	//     //     // Selenium has a bug where it wont load the second instruction of a goTo("URL"). I dont even know why this work around works. But it does.
-	//     //     // If Jesus can walk on water. Can he swim on land?
-	//     //     browser.navigate().to("chrome://version/")
-	//     //     browser.navigate().to("http://localhost:8000/#/offering")
+            //2. Finish
+            browser.waitForExist('.btn.btn-success');
+            browser.click('div.status-item:nth-child(2)');
+            browser.waitForExist('.btn.btn-success');
+            browser.click('.btn.btn-success');
+
+            //Checks
+            browser.waitForExist('.bg-view1 > strong:nth-child(2)');
+            browser.click('.bg-view1 > strong:nth-child(2)');
+            browser.waitForExist('ul.nav-stacked:nth-child(3) > li:nth-child(2) > a:nth-child(1)');
+            var catalogName = browser.getText('ul.nav-stacked:nth-child(3) > li:nth-child(2) > a:nth-child(1)');
+            expect(catalogName).toBe('testCatalog1');
+	    
+	    //     browser.findElement(By.linkText('testCata')).click();
+	    //     browser.findElement(By.className('btn btn-success')).click();
+	    //     browser.waitUntil(elementLocated(By.linkText('Home')));		
+	    //     // Selenium has a bug where it wont load the second instruction of a goTo("URL"). I dont even know why this work around works. But it does.
+	    //     // If Jesus can walk on water. Can he swim on land?
+	    //     browser.navigate().to("chrome://version/")
+	    //     browser.navigate().to("http://localhost:8000/#/offering")
 		
-	//     //     browser.waitUntil(elementLocated(By.linkText('testCata')));
-	//     //     foundCatalog = browser.findElement(By.linkText('testCata'));
-	//     //     foundCatalog.then(x => x.getText().then(function(text) {
-	//     //     	expect(text).toBe('testCatalog23');
-	//     //     	done();
-	//     //     }));
-	//     // }else{
-        //     //     // TODO: Finish this branch
-        //     //     browser.click('.btn.btn-success');
-        //     //     browser.setValue('[name=name]', 'testCatalog1');
-        //     //     browser.setValue('[name=description]', 'A testing description');
-        //     //     browser.click('.btn.btn-default.z-depth-1');
-        //     //     browser.waitForExist('.btn.btn-warning');
-	//     //     browser.click('.btn.btn-warning');
-	//     //     // var catalogName = browser.findElement(By.name("name"));
-	//     //     // catalogName.getAttribute("value").then(function(name){
-	//     //     //     // TODO
-	//     //     // });
-	//     // }
-	// });
+	    //     browser.waitUntil(elementLocated(By.linkText('testCata')));
+	    //     foundCatalog = browser.findElement(By.linkText('testCata'));
+	    //     foundCatalog.then(x => x.getText().then(function(text) {
+	    //     	expect(text).toBe('testCatalog23');
+	    //     	done();
+	    //     }));
+	});
 
 	// xit('Create a new product Specification', function(done) {
 	//     var product = {};
