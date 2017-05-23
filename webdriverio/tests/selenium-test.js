@@ -48,7 +48,6 @@ fdescribe('Integration tests', function () {
                 }
                 
                 else if (results){
-                    console.log(JSON.stringify(results))
                     results.forEach(function(obj) {
                         connection.query(obj.truncateCommand, function(err, res, flds) {
                             if (err){
@@ -100,74 +99,89 @@ fdescribe('Integration tests', function () {
             //browser.call(done)
 	};
 
-	// function createProductSpec(browser, product, expectedProduct, done) {
-	//     var stringSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[1]';
-	//     var numberSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[2]';
-	//     var numberRangeSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[3]';
-	//     browser.findElement(By.linkText('My stock')).click();
-	//     browser.findElement(By.className('item-icon fa fa-file')).click();
-	//     // 1
-	//     browser.findElement(By.className('btn btn-success')).click();
-	//     browser.waitUntil(elementLocated(By.name('name')));
-	//     browser.findElement(By.name('ProductSpecTest')).sendKeys(product.name);
-	//     browser.findElement(By.name('version')).sendKeys(product.version);
-	//     browser.findElement(By.name('brand')).sendKeys(product.brand);
-	//     browser.findElement(By.name('productNumber')).sendKeys(product.productNumber);
-	//     browser.findElement(By.name('description')).sendKeys(product.description);
-	//     browser.findElement(By.className('btn btn-default z-depth-1')).click();
-	//     // 2
-	//     browser.waitUntil(elementLocated(By.className('track')));
-	//     browser.findElement(By.className('btn btn-default z-depth-1')).click();
-	//     // 3
-	//     browser.waitUntil(elementLocated(By.className('track')));
-	//     browser.findElement(By.className('btn btn-default z-depth-1')).click();
-	//     // 4
-	//     browser.waitUntil(elementLocated(By.className('item-icon fa fa-plus')));
-	//     if(product.characteristics){
-	// 	product.characteristics.forEach(characteristic =>
-	// 					browser.findElement(By.className('btn btn-default z-depth-1 ng-scope')).click();
-	// 					browser.waitUntil(elementLocated(By.name('name'))).sendKeys(characteristic.name);
-	// 					browser.findElement(By.name('description')).sendKeys(characteristic.description);
-	// 					// Now i should send the value to the proper field, but first i need to select the correct selector
-	// 					if (characteristic.value.type === 'number'){
-	// 					    browser.findElement(By.css(numberSelector)).click();
-	// 					    browser.findElement(By.name('unitOfMeasure')).sendKeys(characteristic.value.unit);
-	// 					    browser.findElement(By.name('value')).sendKeys(characteristic.value.val);
-	// 					}else if(characteristic.value.type === 'numberRange'){
-	// 					    browser.findElement(By.css(numberRangeSelector)).click();
-	// 					    browser.findElement(By.name('valueFrom')).sendKeys(characteristic.value.valFrom);
-	// 					    browser.findElement(By.name('valueTo')).sendKeys(characteristic.value.valTo);
-	// 					    browser.findElement(By.name('unitOfMeasure')).sendKeys(characteristic.value.unit);
-	// 					}else{
-	// 					    browser.findElement(By.name('value')).sendKeys(characteristic.value.val);
-	// 					}
-	// 					browser.findElement(By.className('item-icon fa fa-plus')).click();
-	// 				       )
-	// 	browser.findElement(By.className('btn btn-warning z-depth-1 ng-scope')).click();
-	//     }
-	//     browser.findElement(By.className('btn btn-default z-depth-1')).click();
-	//     // 5
-	//     browser.waitUntil(elementLocated(By.className('thumbnail thumbnail-lg')));
-	//     if (product.picture){
-	// 	// Its only a test so we only accept picture URLs
-	// 	browser.findElement(By.name('picture')).sendKeys(product.picture)
-	//     }
-	//     browser.findElement(By.className('btn btn-default z-depth-1')).click();
-	//     // 6
-	//     browser.waitUntil(elementLocated(By.name('type')));
-	//     browser.findElement(By.className('btn btn-default z-depth-1')).click();
-	//     // 7
-	//     browser.waitUntil(elementLocated(By.className('text-muted')));
-	//     browser.findElement(By.name('title')).sendKeys(product.title);
-	//     browser.findElement(By.name('text')).sendKeys(product.text);
-	//     browser.findElement(By.className('btn btn-default z-depth-1')).click();
-	//     browser.waitUntil(elementLocated(By.name('name')));
-	//     // TODO: Check that all parameters are the correct ones before creating the product.
+	function createProductSpec(browser, product, expectedProduct, done) {
 
+            function secureSetValue(selector, value) {
+                value ? browser.setValue(value) : browser.setValue('');
+            }
+            
+            var nextButton = 'btn btn-default z-depth-1';
+	    // var stringSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[1]';
+	    // var numberSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[2]';
+	    // var numberRangeSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[3]';
+            browser.waitForExist('[ui-sref=stock]');
+            browser.click('[ui-sref=stock]');
+            browser.waitForExist('li.active:nth-child(2)')
+            browser.click('li.active:nth-child(2)')
+            
+	    // 1
+            browser.waitForExist('.btn.btn-success');
+            browser.click('.btn.btn-success');
+            browser.waitForEnabled('[name=name]');
+            secureSetValue('[name=name]', product.name);
+            secureSetValue('[name=version]', product.version);
+            secureSetValue('[name=brand]', product.brand);
+            secureSetValue('[name=productNumber]', product.productNumber);
+            secureSetValue('[name=description]', product.description);
+            browser.click('form.ng-valid-pattern > div:nth-child(4) > a:nth-child(1)');
 
-	    
-	//     browser.findElement(By.className('btn btn-warning')).click();
-	// };
+	    // 2
+            browser.waitForEnabled(nextButton);
+            browser.click(nextButton);
+
+	    // 3
+            browser.waitForEnabled(nextButton);
+            browser.click(nextButton);
+
+	    // 4
+            browser.waitForExist('.text-left > a:nth-child(1)');
+	    if(product.characteristics){
+                browser.click('.text-left > a:nth-child(1)');
+		product.characteristics.forEach(characteristic =>
+                                                browser.waitForEnabled('[name=name]');
+						//browser.findElement(By.className('btn btn-default z-depth-1 ng-scope')).click();
+                                                secureSetValue('[name=name]', characteristic.name);
+                                                secureSetValue('[name=description]', characteristic.description);
+						// Now i should send the value to the proper field, but first i need to select the correct selector
+						if (characteristic.value.type === 'number'){
+                                                    
+                                                    browser.click('div.row:nth-child(4) > div:nth-child(1) > ng-include:nth-child(2) > div:nth-child(2) > div:nth-child(1) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(2)');
+                                                    secureSetValue('[name=unitOfMeasure]', characteristic.value.unit);
+                                                    secureSetValue('[name=value]', characteristic.value.val);
+						}else if(characteristic.value.type === 'numberRange'){
+                                                    browser.click('div.row:nth-child(4) > div:nth-child(1) > ng-include:nth-child(2) > div:nth-child(2) > div:nth-child(1) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(3)');
+						    browser.findElement(By.css(numberRangeSelector)).click();
+                                                    secureSetValue('[name=unitOfMeasure]', characteristic.value.unit);
+                                                    secureSetValue('[name=valueTo]', characteristic.value.valTo);
+                                                    secureSetValue('[name=valueFrom]', characteristic.value.valFrom);
+						}else{
+                                                    secureSetValue('[name=value]', characteristic.value.val);
+						}
+                                                browser.click('.col-sm-2 > a:nth-child(1)');
+					       )
+		browser.findElement(By.className('btn btn-warning z-depth-1 ng-scope')).click();
+	    }
+            browser.click('div.row:nth-child(4) > div:nth-child(1) > ng-include:nth-child(2) > div:nth-child(4) > a:nth-child(1)')
+
+	    // 5
+            browser.waitForExist('[name=picture]');
+            secureSetValue('[name=picture]', product.picture);
+            browser.click(nextButton);
+
+	    // 6
+            browser.waitForEnabled(nextButton);
+            browser.click(nextButton);
+            
+	    // 7
+            browser.waitForEnabled(nextButton);
+            secureSetValue('[name=title]', product.title);
+            secureSetValue('[name=text]', product.text);
+            browser.click(nextButton);
+
+            // 8
+            browser.waitForEnabled('btn btn-warning');
+            browser.click('btn btn-warning');
+	};
 	/*
 	  As far as i know, these test must be passed in this order as they emulate user possible actions.
 	 */
@@ -214,7 +228,8 @@ fdescribe('Integration tests', function () {
             browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(2) > textarea:nth-child(2)', 'A testing description');
             // Next
             browser.click('form.ng-dirty > div:nth-child(4) > a:nth-child(1)');
-            browser.debug()
+            // TODO: Check why category creation returns a 500 error code.
+            //browser.debug()
 	    browser.waitForExist('.btn-warning');
 	    browser.click('.btn-warning');
             // List all categories
@@ -228,16 +243,17 @@ fdescribe('Integration tests', function () {
 
 	it('Will try to create a new catalog.', function(done) {
             // My Stock
-            browser.waitForExist('.bg-view3');
-            browser.click('.bg-view3');
+            browser.waitForExist('[ui-sref=stock]');
+            browser.click('[ui-sref=stock]');
 
             // New
-            browser.waitForExist('.btn.btn-success');
+            browser.waitForEnabled('.btn.btn-success');
             browser.click('.btn.btn-success');
-
+            
             // 1. General
-            // browser.debug()
-            browser.waitForExist('[name=name]');
+            // 
+            browser.waitForExist('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(1) > input:nth-child(2)');
+            
             browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(1) > input:nth-child(2)', 'testCatalog1');
             browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(2) > textarea:nth-child(2)', 'A testing description');
             browser.click('.btn.btn-default.z-depth-1');
@@ -254,6 +270,7 @@ fdescribe('Integration tests', function () {
             browser.waitForExist('.bg-view1 > strong:nth-child(2)');
             browser.click('.bg-view1 > strong:nth-child(2)');
             browser.waitForExist('ul.nav-stacked:nth-child(3) > li:nth-child(2) > a:nth-child(1)');
+            browser.debug()
             var catalogName = browser.getText('ul.nav-stacked:nth-child(3) > li:nth-child(2) > a:nth-child(1)');
             expect(catalogName).toBe('testCatalog1');
 	    
@@ -273,15 +290,16 @@ fdescribe('Integration tests', function () {
 	    //     }));
 	});
 
-	// xit('Create a new product Specification', function(done) {
-	//     var product = {};
-	//     var expectedProduct = {};
-	    
-	//     browser.waitUntil(titleIs('Biz Ecosystem'));
-	//     // Call the function
-	//     createProductSpec(browser, product, expectedProduct, done);
-	    
-        // });
+	xit('Create a new product Specification', function(done) {
+	    var product = {};
+	    var expectedProduct = {};
+
+            waitUntilTitle('Biz Ecosystem', done);
+
+	    // Call the function
+	    createProductSpec(browser, product, expectedProduct, done);
+	    // TODO: expects
+        });
     });
 });
 
