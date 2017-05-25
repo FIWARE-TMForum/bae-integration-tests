@@ -137,28 +137,27 @@ fdescribe('Integration tests', function () {
             browser.waitForExist('.text-left > a:nth-child(1)');
 	    if(product.characteristics){
                 browser.click('.text-left > a:nth-child(1)');
-		product.characteristics.forEach(characteristic =>
-                                                browser.waitForEnabled('[name=name]');
-						//browser.findElement(By.className('btn btn-default z-depth-1 ng-scope')).click();
-                                                secureSetValue('[name=name]', characteristic.name);
-                                                secureSetValue('[name=description]', characteristic.description);
-						// Now i should send the value to the proper field, but first i need to select the correct selector
-						if (characteristic.value.type === 'number'){
-                                                    
-                                                    browser.click('div.row:nth-child(4) > div:nth-child(1) > ng-include:nth-child(2) > div:nth-child(2) > div:nth-child(1) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(2)');
-                                                    secureSetValue('[name=unitOfMeasure]', characteristic.value.unit);
-                                                    secureSetValue('[name=value]', characteristic.value.val);
-						}else if(characteristic.value.type === 'numberRange'){
-                                                    browser.click('div.row:nth-child(4) > div:nth-child(1) > ng-include:nth-child(2) > div:nth-child(2) > div:nth-child(1) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(3)');
-						    browser.findElement(By.css(numberRangeSelector)).click();
-                                                    secureSetValue('[name=unitOfMeasure]', characteristic.value.unit);
-                                                    secureSetValue('[name=valueTo]', characteristic.value.valTo);
-                                                    secureSetValue('[name=valueFrom]', characteristic.value.valFrom);
-						}else{
-                                                    secureSetValue('[name=value]', characteristic.value.val);
-						}
-                                                browser.click('.col-sm-2 > a:nth-child(1)');
-					       )
+		product.characteristics.forEach(characteristic => {
+                    browser.waitForEnabled('[name=name]');
+                    secureSetValue('[name=name]', characteristic.name);
+                    secureSetValue('[name=description]', characteristic.description);
+		    // Now i should send the value to the proper field, but first i need to select the correct selector
+		    if (characteristic.value.type === 'number'){
+                        
+                        browser.click('div.row:nth-child(4) > div:nth-child(1) > ng-include:nth-child(2) > div:nth-child(2) > div:nth-child(1) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(2)');
+                        secureSetValue('[name=unitOfMeasure]', characteristic.value.unit);
+                        secureSetValue('[name=value]', characteristic.value.val);
+		    }else if(characteristic.value.type === 'numberRange'){
+                        browser.click('div.row:nth-child(4) > div:nth-child(1) > ng-include:nth-child(2) > div:nth-child(2) > div:nth-child(1) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(3)');
+			browser.findElement(By.css(numberRangeSelector)).click();
+                        secureSetValue('[name=unitOfMeasure]', characteristic.value.unit);
+                        secureSetValue('[name=valueTo]', characteristic.value.valTo);
+                        secureSetValue('[name=valueFrom]', characteristic.value.valFrom);
+		    }else{
+                        secureSetValue('[name=value]', characteristic.value.val);
+		    }
+                    browser.click('.col-sm-2 > a:nth-child(1)');
+		})
 		browser.findElement(By.className('btn btn-warning z-depth-1 ng-scope')).click();
 	    }
             browser.click('div.row:nth-child(4) > div:nth-child(1) > ng-include:nth-child(2) > div:nth-child(4) > a:nth-child(1)')
@@ -229,7 +228,7 @@ fdescribe('Integration tests', function () {
             // Next
             browser.click('form.ng-dirty > div:nth-child(4) > a:nth-child(1)');
             // TODO: Check why category creation returns a 500 error code.
-            //browser.debug()
+            browser.debug()
 	    browser.waitForExist('.btn-warning');
 	    browser.click('.btn-warning');
             // List all categories
@@ -290,16 +289,16 @@ fdescribe('Integration tests', function () {
 	    //     }));
 	});
 
-	xit('Create a new product Specification', function(done) {
-	    var product = {};
-	    var expectedProduct = {};
+	// xit('Create a new product Specification', function(done) {
+	//     var product = {};
+	//     var expectedProduct = {};
 
-            waitUntilTitle('Biz Ecosystem', done);
+        //     waitUntilTitle('Biz Ecosystem', done);
 
-	    // Call the function
-	    createProductSpec(browser, product, expectedProduct, done);
-	    // TODO: expects
-        });
+	//     // Call the function
+	//     createProductSpec(browser, product, expectedProduct, done);
+	//     // TODO: expects
+        // });
     });
 });
 
