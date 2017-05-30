@@ -99,12 +99,11 @@ fdescribe('Integration tests', function () {
             //browser.call(done)
 	};
 
-	function createProductSpec(browser, product, expectedProduct, done) {
-
-            function secureSetValue(selector, value) {
+        function secureSetValue(selector, value) {
                 value ? browser.setValue(value) : browser.setValue('');
-            }
-            
+        };
+
+	function createProductSpec(browser, product, expectedProduct, done) {
             var nextButton = 'btn btn-default z-depth-1';
 	    // var stringSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[1]';
 	    // var numberSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[2]';
@@ -181,6 +180,52 @@ fdescribe('Integration tests', function () {
             browser.waitForEnabled('btn btn-warning');
             browser.click('btn btn-warning');
 	};
+
+        function shippingAddressCreation(shipAdd){
+            var properties = ['emailAddress', 'street', 'postcode', 'city',
+                              'stateOrProvince', 'type', 'number'];
+            browser.waitForExist('[name=emailAddress]');
+            secureSetValue('[name=emailAddress]', shipAdd.emailAddress);
+            secureSetValue('[name=street]', shipAdd.street);
+            secureSetValue('[name=postcode]', shipAdd.postcode);
+            secureSetValue('[name=city]', shipAdd.city);
+            secureSetValue('[name=stateOrProvince]', shipAdd.stateOrProvince);
+            secureSetValue('[name=type]', shipAdd.type);
+            secureSetValue('[name=number]', shipAdd.number);
+            browser.click('shipping-address-form.ng-isolate-scope:nth-child(3) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(3) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(210)');
+            browser.click('.dropup > li:nth-child(205)');
+            if (!shipAdd || !properties.every(x => return x in shipAdd)){
+                expect(browser.isEnabled('.btn-warning')).toBe(false);
+            } else {
+                expect(browser.isEnabled('.btn-warning')).toBe(true);
+                browser.click('.btn-warning');
+                // TODO. Make expect in case of correct creation
+            }
+        };
+
+        function businessAddressCreation(busAdd) {
+            if (busAdd.medium === 'Email address') {
+                secureSetValue('[name=emailAddress]', busAdd.email);
+            }else if (busAdd.medium === 'Telephone number') {
+                browser.click('business-address-form.ng-scope > form:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > select:nth-child(2) > option:nth-child(2)');
+                secureSetValue('[name=type]', busAdd.type);
+                browser.click('form.ng-dirty > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > ul:nth-child(2) > li:nth-child(205) > span:nth-child(2)')
+            }else if (busAdd.medium === 'Postal address') {
+                browser.click('business-address-form.ng-scope > form:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > select:nth-child(2) > option:nth-child(3)');
+                secureSetValue('[name=street]', busAdd.street);
+                secureSetValue('[name=postcode]', busAdd.postcode);
+                secureSetValue('[name=city]', busAdd.city);
+                secureSetValue('[name=stateOrProvince]', busAdd.stateOrProvince);
+                browser.click('form.ng-dirty > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(210)');
+            }else{
+                expect(browser.isEnabled('.btn-warning')).toBe(false);
+                return;
+            }
+            browser.waitForEnabled('btn btn-warning');
+            browser.click('btn btn-warning');
+            browser.waitForExist('div.table-responsive:nth-child(3) > table:nth-child(1) > tbody:nth-child(2)');
+            expect(browser.value('tr.ng-scope:nth-child(1) > th:nth-child(1)')).toBe(busAdd.medium);
+        };
 	/*
 	  As far as i know, these test must be passed in this order as they emulate user possible actions.
 	 */
@@ -212,7 +257,21 @@ fdescribe('Integration tests', function () {
             var name = browser.getValue('[name=firstName]');
             expect(name).toBe('testName');
 	});
-        
+
+        it('Should be able to create a shipping address', function(done) {
+            var shipAdd = {};
+            browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
+            shippingAddressCreation(shipAdd);
+        });
+
+        it('Should be able to create a contact medium', function(done) {
+            var busAdd = {};
+            browser.click('.dropdown-toggle.has-stack');
+            browser.click('[ui-sref=settings]');
+            browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
+            browser.click('div.panel:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)');
+            businessAddressCreation(busAdd);
+        });
 
 	it('Should be able to create a new category hierarchy', function(done) {
 	    // Go to Admin page
@@ -239,9 +298,10 @@ fdescribe('Integration tests', function () {
 	    expect(category).toBe('testCategory1');
             browser.click('.col-md-3 > ui-view:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a:nth-child(1)');
 	});
-
+        
 	it('Will try to create a new catalog.', function(done) {
             // My Stock
+            browser.url('http://logic_proxy:8000/#/offering');
             browser.waitForExist('[ui-sref=stock]');
             browser.click('[ui-sref=stock]');
 
@@ -289,6 +349,7 @@ fdescribe('Integration tests', function () {
 	    //     }));
 	});
 
+        
 	// xit('Create a new product Specification', function(done) {
 	//     var product = {};
 	//     var expectedProduct = {};
@@ -299,6 +360,7 @@ fdescribe('Integration tests', function () {
 	//     createProductSpec(browser, product, expectedProduct, done);
 	//     // TODO: expects
         // });
+        
     });
 });
 
