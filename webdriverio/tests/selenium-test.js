@@ -102,7 +102,7 @@ fdescribe('Integration tests', function () {
         function secureSetValue(selector, value) {
                 value ? browser.setValue(value) : browser.setValue('');
         };
-
+        
 	function createProductSpec(browser, product, expectedProduct, done) {
             var nextButton = 'btn btn-default z-depth-1';
 	    // var stringSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[1]';
@@ -298,10 +298,18 @@ fdescribe('Integration tests', function () {
 	    expect(category).toBe('testCategory1');
             browser.click('.col-md-3 > ui-view:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a:nth-child(1)');
 	});
+
+        it('Cannot create an offering without a catalog and a product Spec', function(done) {
+            browser.url('http://logic_proxy:8000/#/offering');
+            browser.waitForExist('[ui-sref=stock]');
+            browser.click('[ui-sref=stock]');
+            browser.click('.nav-responsive > li:nth-child(3) > a:nth-child(1)');
+            expect(browser.value('div.alert:nth-child(1) > span:nth-child(1)')).toBe('Sorry! In order to create a product offering, you must first create at least one product specification.')
+            
+        });
         
 	it('Will try to create a new catalog.', function(done) {
             // My Stock
-            browser.url('http://logic_proxy:8000/#/offering');
             browser.waitForExist('[ui-sref=stock]');
             browser.click('[ui-sref=stock]');
 
@@ -349,17 +357,30 @@ fdescribe('Integration tests', function () {
 	    //     }));
 	});
 
+        xit('Create an offering', function(done) {
+            // This test should fail
+            browser.waitForExist('[ui-sref=stock]');
+            browser.click('[ui-sref=stock]');
+            browser.click('.nav-responsive > li:nth-child(3) > a:nth-child(1)');
+            expect(browser.value('div.alert:nth-child(1) > span:nth-child(1)')).toBe('Sorry! In order to create a product offering, you must first create at least one product specification.')
+        });
+
         
-	// xit('Create a new product Specification', function(done) {
-	//     var product = {};
-	//     var expectedProduct = {};
+	xit('Create a new product Specification', function(done) {
+	    var product = {};
+	    var expectedProduct = {};
 
-        //     waitUntilTitle('Biz Ecosystem', done);
+            waitUntilTitle('Biz Ecosystem', done);
 
-	//     // Call the function
-	//     createProductSpec(browser, product, expectedProduct, done);
-	//     // TODO: expects
-        // });
+	    // Call the function
+	    createProductSpec(browser, product, expectedProduct, done);
+	    // TODO: expects
+        });
+
+        xit('Create an offering', function(done) {
+            // TODO. check that an offering can be created only if a catalog and an specification exists beforehand
+            
+        });
         
     });
 });
