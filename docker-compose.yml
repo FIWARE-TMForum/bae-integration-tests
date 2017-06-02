@@ -7,6 +7,9 @@ biz_db:
         environment:
             - MYSQL_ROOT_PASSWORD=toor
             - MYSQL_HOST=localhost
+            - MYSQL_DATABASE=tests
+        volumes:
+            - ./mysql/:/var/lib/mysql
 
 biz_apis:
         image: biz-apis

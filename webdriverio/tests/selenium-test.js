@@ -47,7 +47,7 @@ fdescribe('Integration tests', function () {
                     console.log("Database error while building the querys. Error: " + error)
                 }
                 
-                else if (results){
+                else {
                     results.forEach(function(obj) {
                         connection.query(obj.truncateCommand, function(err, res, flds) {
                             if (err){
@@ -91,9 +91,9 @@ fdescribe('Integration tests', function () {
             browser.waitForExist('#frontpage > div > div.login > div > div > form > div.modal-body.clearfix > div:nth-child(4) > label', 20000);
             browser.setValue('[name=username]', user.id);
             browser.setValue('[name=password]', user.pass);
+            //browser.debug()
             browser.click('#frontpage > div > div.login > div > div > form > div.modal-footer > button');
             browser.waitForExist('body > div.navbar.navbar-default.navbar-fixed-top.z-depth-2 > div > div.navbar-text.ng-binding', 60000)
-            // browser.debug()
 	    var name = browser.getText('.has-stack > span:nth-child(2)');
             expect(name).toBe(expectedName);
             //browser.call(done)
@@ -194,7 +194,7 @@ fdescribe('Integration tests', function () {
             secureSetValue('[name=number]', shipAdd.number);
             browser.click('shipping-address-form.ng-isolate-scope:nth-child(3) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(3) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(210)');
             browser.click('.dropup > li:nth-child(205)');
-            if (!shipAdd || !properties.every(x => return x in shipAdd)){
+            if (!shipAdd || !properties.every(x => x in shipAdd)){
                 expect(browser.isEnabled('.btn-warning')).toBe(false);
             } else {
                 expect(browser.isEnabled('.btn-warning')).toBe(true);
