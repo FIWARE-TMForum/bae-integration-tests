@@ -34,7 +34,7 @@ logic_proxy:
             - OAUTH2_CLIENT_ID=5eb7188132734431b9ba72b921f2513e
             - OAUTH2_CLIENT_SECRET=fdd18a72312e42cc8e0cd8046f162bc4
             - BIZ_ECOSYS_PORT=8000
-            - BIZ_ECOSYS_HOST=localhost
+            - BIZ_ECOSYS_HOST=logic_proxy
             - APIS_HOST=biz_apis
             - CHARGING_PORT=8006
             - CHARGING_HOST=charging_backend

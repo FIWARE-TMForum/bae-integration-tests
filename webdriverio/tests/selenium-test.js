@@ -41,22 +41,45 @@ fdescribe('Integration tests', function () {
 
     function cleanDB() {
         console.log("Cleaning database")
+        connection.query("SET FOREIGN_KEY_CHECKS=0;", function(error, results, fields) {
+            if (error){
+                console.log("Error at setting foreign keys checks to 0. " + error);
+            }
+        });
         dbases.forEach(function(db) {
             connection.query("SELECT CONCAT('DELETE FROM ', ?, '.', TABLE_NAME,';') AS truncateCommand FROM information_schema.TABLES WHERE TABLE_SCHEMA = ?;", [db, db], function(error, results, fields) {
                 if (error){
-                    console.log("Database error while building the querys. Error: " + error)
+                    console.log("Database error while building the querys. " + error);
                 }
                 
                 else {
+                    
                     results.forEach(function(obj) {
+                        if (db === 'DSPRODUCTCATALOG2'){
+                            console.log(obj)
+                        }
                         connection.query(obj.truncateCommand, function(err, res, flds) {
                             if (err){
-                                console.log("Database error while cleaning the tables. Error: " + err)
+                                console.log("Database error while cleaning the tables. " + err);
                             }
                         });
                     });
+                    if (db !== 'RSS'){
+                        connection.query("INSERT INTO "+ db + ".SEQUENCE VALUES ('SEQ_GEN',0);", function(errorMsg, resultInsert, fields){
+                            if (errorMsg){
+                                console.log("Database error while initializing the tables. " + errorMsg);
+                            }else{
+                                console.log(db + ": Success");
+                            }
+                        });
+                    }
                 }
             });
+        });
+        connection.query("SET FOREIGN_KEY_CHECKS=1;", function(error, results, fields) {
+            if (error){
+                console.log("Error at setting foreign keys checks to 1. " + error);
+            }
         });
         console.log("Database cleaned")
     };
@@ -91,7 +114,7 @@ fdescribe('Integration tests', function () {
             browser.waitForExist('#frontpage > div > div.login > div > div > form > div.modal-body.clearfix > div:nth-child(4) > label', 20000);
             browser.setValue('[name=username]', user.id);
             browser.setValue('[name=password]', user.pass);
-            //browser.debug()
+            
             browser.click('#frontpage > div > div.login > div > div > form > div.modal-footer > button');
             browser.waitForExist('body > div.navbar.navbar-default.navbar-fixed-top.z-depth-2 > div > div.navbar-text.ng-binding', 60000)
 	    var name = browser.getText('.has-stack > span:nth-child(2)');
@@ -100,7 +123,7 @@ fdescribe('Integration tests', function () {
 	};
 
         function secureSetValue(selector, value) {
-                value ? browser.setValue(value) : browser.setValue('');
+            value ? browser.setValue(selector, value) : browser.setValue(selector, '');
         };
         
 	function createProductSpec(browser, product, expectedProduct, done) {
@@ -185,18 +208,19 @@ fdescribe('Integration tests', function () {
             var properties = ['emailAddress', 'street', 'postcode', 'city',
                               'stateOrProvince', 'type', 'number'];
             browser.waitForExist('[name=emailAddress]');
-            secureSetValue('[name=emailAddress]', shipAdd.emailAddress);
-            secureSetValue('[name=street]', shipAdd.street);
-            secureSetValue('[name=postcode]', shipAdd.postcode);
-            secureSetValue('[name=city]', shipAdd.city);
-            secureSetValue('[name=stateOrProvince]', shipAdd.stateOrProvince);
-            secureSetValue('[name=type]', shipAdd.type);
-            secureSetValue('[name=number]', shipAdd.number);
-            browser.click('shipping-address-form.ng-isolate-scope:nth-child(3) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(3) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(210)');
-            browser.click('.dropup > li:nth-child(205)');
+            // browser.debug()
             if (!shipAdd || !properties.every(x => x in shipAdd)){
-                expect(browser.isEnabled('.btn-warning')).toBe(false);
+                expect(browser.isExisting('[class="btn btn-warning"][disabled="disabled"]')).toBe(true);
             } else {
+                secureSetValue('[name=emailAddress]', shipAdd.emailAddress);
+                secureSetValue('[name=street]', shipAdd.street);
+                secureSetValue('[name=postcode]', shipAdd.postcode);
+                secureSetValue('[name=city]', shipAdd.city);
+                secureSetValue('[name=stateOrProvince]', shipAdd.stateOrProvince);
+                secureSetValue('[name=type]', shipAdd.type);
+                secureSetValue('[name=number]', shipAdd.number);
+                browser.click('shipping-address-form.ng-isolate-scope:nth-child(3) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(3) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(210)');
+                browser.click('.dropup > li:nth-child(205)');
                 expect(browser.isEnabled('.btn-warning')).toBe(true);
                 browser.click('.btn-warning');
                 // TODO. Make expect in case of correct creation
@@ -204,6 +228,7 @@ fdescribe('Integration tests', function () {
         };
 
         function businessAddressCreation(busAdd) {
+            browser.waitForExist('[name=emailAddress]');
             if (busAdd.medium === 'Email address') {
                 secureSetValue('[name=emailAddress]', busAdd.email);
             }else if (busAdd.medium === 'Telephone number') {
@@ -218,7 +243,8 @@ fdescribe('Integration tests', function () {
                 secureSetValue('[name=stateOrProvince]', busAdd.stateOrProvince);
                 browser.click('form.ng-dirty > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(210)');
             }else{
-                expect(browser.isEnabled('.btn-warning')).toBe(false);
+                // browser.debug()
+                expect(browser.isExisting('[class="btn btn-warning"][disabled="disabled"]')).toBe(true);
                 return;
             }
             browser.waitForEnabled('btn btn-warning');
@@ -258,19 +284,23 @@ fdescribe('Integration tests', function () {
             expect(name).toBe('testName');
 	});
 
-        it('Should be able to create a shipping address', function(done) {
-            var shipAdd = {};
+        it('Should be able to create a business address', function(done) {
+            var busAdd = {};
             browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
-            shippingAddressCreation(shipAdd);
+            
+            businessAddressCreation(busAdd);
         });
 
-        it('Should be able to create a contact medium', function(done) {
-            var busAdd = {};
+        it('Should be able to create a shipping address', function(done) {
+            var shipAdd = {};
+            
             browser.click('.dropdown-toggle.has-stack');
             browser.click('[ui-sref=settings]');
             browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
             browser.click('div.panel:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)');
-            businessAddressCreation(busAdd);
+
+            shippingAddressCreation(shipAdd);
+            
         });
 
 	it('Should be able to create a new category hierarchy', function(done) {
@@ -287,31 +317,46 @@ fdescribe('Integration tests', function () {
             // Next
             browser.click('form.ng-dirty > div:nth-child(4) > a:nth-child(1)');
             // TODO: Check why category creation returns a 500 error code.
-            browser.debug()
+            
 	    browser.waitForExist('.btn-warning');
 	    browser.click('.btn-warning');
             // List all categories
+            
             browser.waitForExist('.breadcrumb-triangle > a:nth-child(1) > span:nth-child(2)');
             browser.click('.breadcrumb-triangle > a:nth-child(1) > span:nth-child(2)');
+            // browser.debug()
             browser.waitForExist('strong.ng-binding');
 	    var category = browser.getText('strong.ng-binding');
 	    expect(category).toBe('testCategory1');
             browser.click('.col-md-3 > ui-view:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a:nth-child(1)');
 	});
 
-        it('Cannot create an offering without a catalog and a product Spec', function(done) {
+        it('Cannot create an offering without a catalog nor product Spec', function(done) {
             browser.url('http://logic_proxy:8000/#/offering');
-            browser.waitForExist('[ui-sref=stock]');
-            browser.click('[ui-sref=stock]');
+            
+            // My stock
+            browser.waitForExist('.bg-view3'); 
+            browser.click('.bg-view3');
+
+            // Offerings
             browser.click('.nav-responsive > li:nth-child(3) > a:nth-child(1)');
-            expect(browser.value('div.alert:nth-child(1) > span:nth-child(1)')).toBe('Sorry! In order to create a product offering, you must first create at least one product specification.')
+
+            //browser.debug(); 
+            // click on New button
+            browser.waitForEnabled('.btn.btn-success'); 
+            browser.click('.btn.btn-success');
+
+            browser.waitForExist('div.alert:nth-child(1) > span:nth-child(1)');
+            
+            expect(browser.getText('div.alert:nth-child(1) > span:nth-child(1)')).toBe('Sorry! In order to create a product offering, you must first create at least one product catalogue.');
             
         });
         
 	it('Will try to create a new catalog.', function(done) {
             // My Stock
-            browser.waitForExist('[ui-sref=stock]');
-            browser.click('[ui-sref=stock]');
+            // browser.debug()
+            browser.waitForExist('.bg-view3');
+            browser.click('.bg-view3');
 
             // New
             browser.waitForEnabled('.btn.btn-success');
@@ -324,6 +369,7 @@ fdescribe('Integration tests', function () {
             browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(1) > input:nth-child(2)', 'testCatalog1');
             browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(2) > textarea:nth-child(2)', 'A testing description');
             browser.click('.btn.btn-default.z-depth-1');
+            // browser.debug()
             browser.waitForExist('.btn.btn-warning');
 	    browser.click('.btn.btn-warning');
             
@@ -337,7 +383,7 @@ fdescribe('Integration tests', function () {
             browser.waitForExist('.bg-view1 > strong:nth-child(2)');
             browser.click('.bg-view1 > strong:nth-child(2)');
             browser.waitForExist('ul.nav-stacked:nth-child(3) > li:nth-child(2) > a:nth-child(1)');
-            browser.debug()
+            // browser.debug()
             var catalogName = browser.getText('ul.nav-stacked:nth-child(3) > li:nth-child(2) > a:nth-child(1)');
             expect(catalogName).toBe('testCatalog1');
 	    
@@ -357,12 +403,22 @@ fdescribe('Integration tests', function () {
 	    //     }));
 	});
 
-        xit('Create an offering', function(done) {
+        it('Cannot create an offering without a product Spec', function(done) {
             // This test should fail
-            browser.waitForExist('[ui-sref=stock]');
-            browser.click('[ui-sref=stock]');
+            // My stock
+            browser.waitForExist('.bg-view3'); 
+            browser.click('.bg-view3');
+
+            // Offerings
             browser.click('.nav-responsive > li:nth-child(3) > a:nth-child(1)');
-            expect(browser.value('div.alert:nth-child(1) > span:nth-child(1)')).toBe('Sorry! In order to create a product offering, you must first create at least one product specification.')
+
+            // click on New button 
+            browser.waitForEnabled('.btn.btn-success'); 
+            browser.click('.btn.btn-success');
+
+            browser.waitForExist('div.alert:nth-child(1) > span:nth-child(1)');
+            
+            expect(browser.getText('div.alert:nth-child(1) > span:nth-child(1)')).toBe('Sorry! In order to create a product offering, you must first create at least one product specification.')
         });
 
         

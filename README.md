@@ -21,5 +21,8 @@
    initialization gets in the way of docker-compose initialization; As soon as
    the biz_db finish its initialization, stop it. You have now a ready-to-run
    configuration on ./mysql/ (a shared volume).
-2. 
+   1. Alternatively, it might be possible to use the .sql dumps. This should
+      create and initialice the database. However, glassfish deployment is still
+      needed so Im testing this possibility
+2. Uncomment everything that was previously uncommented. Make sure that 
 
