@@ -53,14 +53,20 @@ fdescribe('Integration tests', function () {
                 }
                 
                 else {
-                    
                     results.forEach(function(obj) {
-                        if (db === 'DSPRODUCTCATALOG2'){
-                            console.log(obj)
-                        }
+                        // if (db === 'DSPRODUCTCATALOG2'){
+                        //     console.log(obj)
+                        // }
                         connection.query(obj.truncateCommand, function(err, res, flds) {
                             if (err){
-                                console.log("Database error while cleaning the tables. " + err);
+                                // Sorry, whoever is reading this, for this "If this doesnt work... Repeat it". Sometimes it works, sometimes it doesnt.
+                                // There may be some foreign key errors in case of deleting the parent first so. Whatever.
+                                console.log("Error cleaning a table. Repeating the command.")
+                                connection.query(obj.truncateCommand, function(errorMsg, resultInsert, fds){
+                                    if (errorMsg){
+                                        console.log("Unexpected database error." + errorMsg);
+                                    }
+                                })
                             }
                         });
                     });
@@ -261,10 +267,6 @@ fdescribe('Integration tests', function () {
 	// // TODO: Change this expect. This checks nothing
         // var title = browser.getTitle();
 	// expect(title).toBe('Biz Ecosystem');
-
-	
-	
-	
 	
 	it('Should be able to log in with a correct username and password', function (done) {
 	    checkLogin(userProvider, 'testfiware', done);
@@ -285,14 +287,21 @@ fdescribe('Integration tests', function () {
 	});
 
         it('Should be able to create a business address', function(done) {
-            var busAdd = {};
+            var busAdd = {medium: 'Email address',
+                          emailAddress: 'testEmail@email.com'};
             browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
             
             businessAddressCreation(busAdd);
         });
 
         it('Should be able to create a shipping address', function(done) {
-            var shipAdd = {};
+            var shipAdd = {emailAddress: 'testEmail@email.com',
+                           street: 'fighter',
+                           postcode: '1200000',
+                           city: 'Tokyo',
+                           stateOrProvince: 'Tokyo',
+                           type: 'warehouse',
+                           number: '2'};
             
             browser.click('.dropdown-toggle.has-stack');
             browser.click('[ui-sref=settings]');
@@ -352,7 +361,7 @@ fdescribe('Integration tests', function () {
             
         });
         
-	it('Will try to create a new catalog.', function(done) {
+	it('Should be able to create a new catalog.', function(done) {
             // My Stock
             // browser.debug()
             browser.waitForExist('.bg-view3');
@@ -367,13 +376,14 @@ fdescribe('Integration tests', function () {
             browser.waitForExist('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(1) > input:nth-child(2)');
             
             browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(1) > input:nth-child(2)', 'testCatalog1');
-            browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(2) > textarea:nth-child(2)', 'A testing description');
+            browser.setValue('div.col-md-9:nth-child(2) > div:nth-child(1) > div:nth-child(1) > ng-include:nth-child(2) > form:nth-child(1) > div:nth-child(2) > textarea:nth-child(2)', 'A description');
             browser.click('.btn.btn-default.z-depth-1');
             // browser.debug()
             browser.waitForExist('.btn.btn-warning');
 	    browser.click('.btn.btn-warning');
             
             //2. Finish
+            // browser.debug()
             browser.waitForExist('.btn.btn-success');
             browser.click('div.status-item:nth-child(2)');
             browser.waitForExist('.btn.btn-success');
@@ -386,21 +396,11 @@ fdescribe('Integration tests', function () {
             // browser.debug()
             var catalogName = browser.getText('ul.nav-stacked:nth-child(3) > li:nth-child(2) > a:nth-child(1)');
             expect(catalogName).toBe('testCatalog1');
-	    
-	    //     browser.findElement(By.linkText('testCata')).click();
-	    //     browser.findElement(By.className('btn btn-success')).click();
-	    //     browser.waitUntil(elementLocated(By.linkText('Home')));		
+	    		
 	    //     // Selenium has a bug where it wont load the second instruction of a goTo("URL"). I dont even know why this work around works. But it does.
 	    //     // If Jesus can walk on water. Can he swim on land?
 	    //     browser.navigate().to("chrome://version/")
 	    //     browser.navigate().to("http://localhost:8000/#/offering")
-		
-	    //     browser.waitUntil(elementLocated(By.linkText('testCata')));
-	    //     foundCatalog = browser.findElement(By.linkText('testCata'));
-	    //     foundCatalog.then(x => x.getText().then(function(text) {
-	    //     	expect(text).toBe('testCatalog23');
-	    //     	done();
-	    //     }));
 	});
 
         it('Cannot create an offering without a product Spec', function(done) {

@@ -12,6 +12,9 @@
     from
     [Github page](https://github.com/FIWARE-TMForum/business-ecosystem-rss/tree/develop) built
     with the tag 'biz_rss'.
+  * **Webdriverio**. In this repository one webdriverio ready-to-build is
+    provided inside *webdriverio* dir: Simply execute `docker build -t
+    webdriverio .` on that dir.
     
 ## Steps
 
@@ -24,5 +27,49 @@
    1. Alternatively, it might be possible to use the .sql dumps. This should
       create and initialice the database. However, glassfish deployment is still
       needed so Im testing this possibility
-2. Uncomment everything that was previously uncommented. Make sure that 
+2. Uncomment everything that was previously uncommented. If everything is
+   properly set, then execute `docker-compose run --rm webdriverio wdio` and all
+   should be run smoothly. Give it a few minutes to initialice everything,
+   deploy wars, etc. 
+3.  **Important!** The tests might fail because the system is not completely
+      functional yet.
+   1. To check if everything went fine, do `docker ps -a`. This will show you
+      the currently running containers. Find the logic_proxy one, copy the
+      *CONTAINER ID* and execute `docker logs <containerID>` to see the log
+      output of that container.
+      1. You may use the options `--since <1s>` to show only the log from 1s ago
+         until now.
+      2. Aditionaly, you may also use `-f` to keep the log open and running in
+         that console.
+    2. The last output of the logic_proxy container should be *<TIMESTAMP>  -
+       INFO: Server - Business Ecosystem Logic Proxy starting on port 8000*
+4. A VNC server is provided so admins may see what the tests are doing. In order
+   to connect to that server you may use whatever your favourite VNC client is.
+   1. I am using vinagre, for simplicity.
+   2. To connect from the host machine, connect to **localhost:5900** if in
+      firefox, **localhost:5901** in chrome, and as soon as one of the browsers
+      starts you should be able to see the progress.
+   3. There are a lot of different configurations, in case of doubt or specific
+      vnc configuration - More vnc simultaneous connections, etc - see
+      [docker-Selenium github Page](https://github.com/SeleniumHQ/docker-selenium)
+5. With each test, properly ended or not, a snapshot is taken of the current
+   frontend state. Those shots are saved on the dir *shots* inside webdriverio's
+   dir.
+   1. It is possible to configure those shots to test how the web should look
+      and warn the user if anything of the interface changes between test
+      executions
+   2. Currently, that kind of CSS testing is not provided by this repo but, even
+      if i cant promise to implement it, im seriously considering it.
+   3. More information of this feature can be checked
+      at [webdrivercss](http://webdriver.io/guide/plugins/webdrivercss.html)
+      
+Anyway, all the information about the capabilities and possible configurations
+is avaliable at [webdriverio](http://webdriver.io/) and, of
+course, [Google](www.google.com) or [DuckDuckGo](https://duckduckgo.com/)
+
+## Common problems
+
+As you can imagine, this has been a nightmare to build and configure. My main
+motivation was to create an autonomous docker system that allows developers to
+test whatever app they want to.
 
