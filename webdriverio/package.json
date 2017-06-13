@@ -14,8 +14,8 @@
     "css-to-xpath": "0",
     "icu-loader": "2",
     "webdrivercss": "1.1.10",
-      "webdriverrtc": "1.0.0",
-      "mysql": "2.13.0"
+    "webdriverrtc": "1.0.0",
+    "mysql": "2.13.0"
   },
   "devDependencies": {
       "wdio-jasmine-framework": "^0.2.19"

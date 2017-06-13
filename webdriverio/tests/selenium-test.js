@@ -1,7 +1,8 @@
+var fs = require("fs");
+var mysql = require('mysql');
 
 fdescribe('Integration tests', function () {
 
-    var mysql = require('mysql');
     var connection = mysql.createConnection({
         host: 'biz_db',
         port: '3306',
@@ -29,8 +30,9 @@ fdescribe('Integration tests', function () {
             
             console.log('connected as id ' + connection.threadId);
         });
-	cleanDB()
-	// DDBB must be cleaned from data, the only thing it should have is the schema.
+	cleanDB();
+        cleanIndexes();
+	// DDBB and indexes must be cleaned from data, the only thing it should have is the schema.
     });
     
     afterAll(function(done) {
@@ -38,6 +40,10 @@ fdescribe('Integration tests', function () {
         browser.end(done);
 //	webdriverio.end();
     });
+
+    function cleanIndexes() {
+        
+    };
 
     function cleanDB() {
         console.log("Cleaning database")
@@ -137,8 +143,8 @@ fdescribe('Integration tests', function () {
 	    // var stringSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[1]';
 	    // var numberSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[2]';
 	    // var numberRangeSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[3]';
-            browser.waitForExist('[ui-sref=stock]');
-            browser.click('[ui-sref=stock]');
+            browser.waitForExist('.bg-view3'); 
+            browser.click('.bg-view3');
             browser.waitForExist('li.active:nth-child(2)')
             browser.click('li.active:nth-child(2)')
             
@@ -213,18 +219,25 @@ fdescribe('Integration tests', function () {
         function shippingAddressCreation(shipAdd){
             var properties = ['emailAddress', 'street', 'postcode', 'city',
                               'stateOrProvince', 'type', 'number'];
+            var emailSelector = 'html.ng-scope body.ng-scope div.container div.row div.col-xs-12.col-md-9 ui-view.ng-scope ui-view.ng-scope div.row.ng-scope div.col-xs-12 ui-view.ng-scope div.row.ng-scope div.col-xs-12.ng-scope div.panel.panel-default.z-depth-1 div.panel-body.ng-scope shipping-address-form.ng-isolate-scope form.ng-pristine.ng-valid-email.ng-invalid.ng-invalid-required.ng-valid-maxlength.ng-valid-international-phone-number div.row div.col-xs-12 div.row div.col-sm-12 div.form-group.has-error input.form-control.ng-pristine.ng-valid-email.ng-invalid.ng-invalid-required.ng-touched';
             browser.waitForExist('[name=emailAddress]');
+            browser.waitForEnabled('[name=emailAddress]');
             // browser.debug()
             if (!shipAdd || !properties.every(x => x in shipAdd)){
                 expect(browser.isExisting('[class="btn btn-warning"][disabled="disabled"]')).toBe(true);
             } else {
-                secureSetValue('[name=emailAddress]', shipAdd.emailAddress);
+                browser.debug();
+                
+                secureSetValue(emailSelector, shipAdd.emailAddress);
+                browser.debug();
                 secureSetValue('[name=street]', shipAdd.street);
+                browser.debug();
                 secureSetValue('[name=postcode]', shipAdd.postcode);
                 secureSetValue('[name=city]', shipAdd.city);
                 secureSetValue('[name=stateOrProvince]', shipAdd.stateOrProvince);
                 secureSetValue('[name=type]', shipAdd.type);
                 secureSetValue('[name=number]', shipAdd.number);
+                // browser.debug();
                 browser.click('shipping-address-form.ng-isolate-scope:nth-child(3) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(3) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(210)');
                 browser.click('.dropup > li:nth-child(205)');
                 expect(browser.isEnabled('.btn-warning')).toBe(true);
@@ -235,6 +248,7 @@ fdescribe('Integration tests', function () {
 
         function businessAddressCreation(busAdd) {
             browser.waitForExist('[name=emailAddress]');
+            browser.waitForEnabled('[name=emailAddress]');
             if (busAdd.medium === 'Email address') {
                 secureSetValue('[name=emailAddress]', busAdd.email);
             }else if (busAdd.medium === 'Telephone number') {
@@ -268,11 +282,11 @@ fdescribe('Integration tests', function () {
         // var title = browser.getTitle();
 	// expect(title).toBe('Biz Ecosystem');
 	
-	it('Should be able to log in with a correct username and password', function (done) {
+	fit('Should be able to log in with a correct username and password', function (done) {
 	    checkLogin(userProvider, 'testfiware', done);
 	});
 
-	it('Should be able to update his/her info', function(done) {
+	fit('Should be able to update his/her info', function(done) {
             browser.click('.dropdown-toggle.has-stack');
             browser.click('[ui-sref=settings]');
             
@@ -286,15 +300,7 @@ fdescribe('Integration tests', function () {
             expect(name).toBe('testName');
 	});
 
-        it('Should be able to create a business address', function(done) {
-            var busAdd = {medium: 'Email address',
-                          emailAddress: 'testEmail@email.com'};
-            browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
-            
-            businessAddressCreation(busAdd);
-        });
-
-        it('Should be able to create a shipping address', function(done) {
+        fit('Should be able to create a shipping address', function(done) {
             var shipAdd = {emailAddress: 'testEmail@email.com',
                            street: 'fighter',
                            postcode: '1200000',
@@ -303,13 +309,32 @@ fdescribe('Integration tests', function () {
                            type: 'warehouse',
                            number: '2'};
             
+            browser.waitForExist('.btn.btn-success');
+            
             browser.click('.dropdown-toggle.has-stack');
             browser.click('[ui-sref=settings]');
             browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
-            browser.click('div.panel:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)');
 
             shippingAddressCreation(shipAdd);
             
+        });
+
+        it('Should be able to create a business address', function(done) {
+            var busAdd = {medium: 'Email address',
+                          emailAddress: 'testEmail@email.com'};
+
+            browser.waitForExist('.dropdown-toggle.has-stack');
+            
+            browser.click('.dropdown-toggle.has-stack');
+            browser.click('[ui-sref=settings]');
+            browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
+            
+            // Business Address tab
+            browser.click('div.panel:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)'); 
+            
+            //browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
+            
+            businessAddressCreation(busAdd);
         });
 
 	it('Should be able to create a new category hierarchy', function(done) {
@@ -333,10 +358,13 @@ fdescribe('Integration tests', function () {
             
             browser.waitForExist('.breadcrumb-triangle > a:nth-child(1) > span:nth-child(2)');
             browser.click('.breadcrumb-triangle > a:nth-child(1) > span:nth-child(2)');
-            // browser.debug()
+            
             browser.waitForExist('strong.ng-binding');
 	    var category = browser.getText('strong.ng-binding');
-	    expect(category).toBe('testCategory1');
+            expect(category).toBe('testCategory1');
+            
+            browser.debug()
+            
             browser.click('.col-md-3 > ui-view:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a:nth-child(1)');
 	});
 
@@ -354,7 +382,7 @@ fdescribe('Integration tests', function () {
             // click on New button
             browser.waitForEnabled('.btn.btn-success'); 
             browser.click('.btn.btn-success');
-
+            // div.alert:nth-child(1) > span:nth-child(1)
             browser.waitForExist('div.alert:nth-child(1) > span:nth-child(1)');
             
             expect(browser.getText('div.alert:nth-child(1) > span:nth-child(1)')).toBe('Sorry! In order to create a product offering, you must first create at least one product catalogue.');
@@ -393,10 +421,12 @@ fdescribe('Integration tests', function () {
             browser.waitForExist('.bg-view1 > strong:nth-child(2)');
             browser.click('.bg-view1 > strong:nth-child(2)');
             browser.waitForExist('ul.nav-stacked:nth-child(3) > li:nth-child(2) > a:nth-child(1)');
-            // browser.debug()
+
+            
             var catalogName = browser.getText('ul.nav-stacked:nth-child(3) > li:nth-child(2) > a:nth-child(1)');
             expect(catalogName).toBe('testCatalog1');
-	    		
+
+	    browser.debug()
 	    //     // Selenium has a bug where it wont load the second instruction of a goTo("URL"). I dont even know why this work around works. But it does.
 	    //     // If Jesus can walk on water. Can he swim on land?
 	    //     browser.navigate().to("chrome://version/")
@@ -422,14 +452,23 @@ fdescribe('Integration tests', function () {
         });
 
         
-	xit('Create a new product Specification', function(done) {
-	    var product = {};
+	it('Create a new product Specification', function(done) {
+	    var product = {name: 'testProduct',
+                           version: '1.0',
+                           brand: 'Bimbo',
+                           productNumber: '3141592',
+                           description: 'A deliciously mathematical description',
+                           picture: 'http://www.testingUrl.com',
+                           title: 'testTitle',
+                           text: 'The title is testTitle not testTicle'};
 	    var expectedProduct = {};
 
             waitUntilTitle('Biz Ecosystem', done);
-
+            
 	    // Call the function
 	    createProductSpec(browser, product, expectedProduct, done);
+            waitUntilTitle('Biz Ecosystem', done);
+            browser.debug()
 	    // TODO: expects
         });
 

@@ -35,9 +35,9 @@
       functional yet.
    1. To check if everything went fine, do `docker ps -a`. This will show you
       the currently running containers. Find the logic_proxy one, copy the
-      *CONTAINER ID* and execute `docker logs <containerID>` to see the log
+      *CONTAINER ID* hash and execute `docker logs <containerID>` to see the log
       output of that container.
-      1. You may use the options `--since <1s>` to show only the log from 1s ago
+      1. You may use the options `--since 1s` to show only the log from 1s ago
          until now.
       2. Aditionaly, you may also use `-f` to keep the log open and running in
          that console.
@@ -72,4 +72,11 @@ course, [Google](www.google.com) or [DuckDuckGo](https://duckduckgo.com/)
 As you can imagine, this has been a nightmare to build and configure. My main
 motivation was to create an autonomous docker system that allows developers to
 test whatever app they want to.
+
+First of all, the entire docker-compose is built ad-hoc so there may be a lot of
+inexplicable config errors so you should **really** check that the *config.js*
+file of logic-proxy container and *settings.py* file of charging_backend
+container are properly filled
+
+
 
