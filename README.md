@@ -45,7 +45,8 @@
        INFO: Server - Business Ecosystem Logic Proxy starting on port 8000*
 4. A VNC server is provided so admins may see what the tests are doing. In order
    to connect to that server you may use whatever your favourite VNC client is.
-   1. I am using vinagre, for simplicity.
+   1. I am using vinagre, for simplicity. But as i said, any other VNC client
+      may be used.
    2. To connect from the host machine, connect to **localhost:5900** if in
       firefox, **localhost:5901** in chrome, and as soon as one of the browsers
       starts you should be able to see the progress.
@@ -76,7 +77,30 @@ test whatever app they want to.
 First of all, the entire docker-compose is built ad-hoc so there may be a lot of
 inexplicable config errors so you should **really** check that the *config.js*
 file of logic-proxy container and *settings.py* file of charging_backend
-container are properly filled
+container are properly filled.
+
+The most common problem i had was the version control among the
+containers: In each of the Dockerfiles there is a *git pull* which chooses the
+aplication version to use. If you dont know which version goes with each one,
+ask your manager or pray -Both will be useless- but as long as nothing changes,
+the provided code should work.
+- You should always pull this repo **before** executing anything. This repo
+  will be updated with newer versions - Thats what i hope-
+  
+In case of running manually the command `docker-compose run --rm webdriverio
+wdio` to run the tests remember that if you kill the docker process, leaving
+behind an stopped container of webdriverio. Keep an eye on those
+zombie-containers as they may bleed your RAM badly.
+
+Remember that the images are static, meaning that hot-changes inside the
+containers are not permanent; If you want any changes to be permanent, modify
+the Dockerfile and build again the image.
+
+This instalation expects the ports that will be used to be free, meaning that if
+any of them is occupied by another expernal service, you will have a very bad
+time of crashes, 500 code responses and what-not.
+
+
 
 
 
