@@ -40,6 +40,7 @@ logic_proxy:
             - CHARGING_HOST=charging_backend
             - GLASSFISH_PORT=8080
             - GLASSFISH_HOST=biz_apis
+            - INDEXES_PATH=/business-ecosystem-logic-proxy/indexes/
 
 charging_backend:
         image: charging-backend
@@ -55,7 +56,7 @@ charging_backend:
             - PAYPAL_CLIENT_SECRET=your-paypal-client-secret
             - GLASSFISH_HOST=biz_apis
             - GLASSFISH_PORT=8080
-            - ADMIN_EMAIL=eugenio90@gmail.com
+            - ADMIN_EMAIL=<yourEmail@here.com> # eugenio90@gmail.com
             - EMAIL_USER=
             - EMAIL_PASSWD=
             - EMAIL_SERVER=
@@ -92,9 +93,9 @@ webdriverio:
         environment:
             - HUB_PORT_4444_TCP_ADDR=hub
             - HUB_PORT_4444_TCP_PORT=4444
-        volumes:
+#        volumes:
             # {{replace_with_path_of_wdio.conf.js_file}}
-            - /home/eugenio/Documentos/github/bae-integration-tests/webdriverio:/app
+            # - <PATH/TO/YOUR/WEBDRIVERIO/DIR>
 
 hub:
         image: selenium/hub

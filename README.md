@@ -27,11 +27,14 @@
    1. Alternatively, it might be possible to use the .sql dumps. This should
       create and initialice the database. However, glassfish deployment is still
       needed so Im testing this possibility
-2. Uncomment everything that was previously uncommented. If everything is
+2. Fill up the following fields:
+   1. At charging_backend container. *ADMIN_EMAIL=<yourEmail@here.com>*
+   2. At webdriverio container, under volumes. Uncomment the label and fill up the *<PATH/TO/YOUR/WEBDRIVERIO/DIR>*
+3. Uncomment everything that was previously uncommented. If everything is
    properly set, then execute `docker-compose run --rm webdriverio wdio` and all
    should be run smoothly. Give it a few minutes to initialice everything,
    deploy wars, etc. 
-3.  **Important!** The tests might fail because the system is not completely
+4.  **Important!** The tests might fail because the system is not completely
       functional yet.
    1. To check if everything went fine, do `docker ps -a`. This will show you
       the currently running containers. Find the logic_proxy one, copy the
@@ -43,7 +46,7 @@
          that console.
     2. The last output of the logic_proxy container should be *<TIMESTAMP>  -
        INFO: Server - Business Ecosystem Logic Proxy starting on port 8000*
-4. A VNC server is provided so admins may see what the tests are doing. In order
+5. A VNC server is provided so admins may see what the tests are doing. In order
    to connect to that server you may use whatever your favourite VNC client is.
    1. I am using vinagre, for simplicity. But as i said, any other VNC client
       may be used.
@@ -53,7 +56,7 @@
    3. There are a lot of different configurations, in case of doubt or specific
       vnc configuration - More vnc simultaneous connections, etc - see
       [docker-Selenium github Page](https://github.com/SeleniumHQ/docker-selenium)
-5. With each test, properly ended or not, a snapshot is taken of the current
+6. With each test, properly ended or not, a snapshot is taken of the current
    frontend state. Those shots are saved on the dir *shots* inside webdriverio's
    dir.
    1. It is possible to configure those shots to test how the web should look
@@ -84,11 +87,11 @@ containers: In each of the Dockerfiles there is a *git pull* which chooses the
 aplication version to use. If you dont know which version goes with each one,
 ask your manager or pray -Both will be useless- but as long as nothing changes,
 the provided code should work.
-- You should always pull this repo **before** executing anything. This repo
+- You should always pull -update- this repo **before** executing anything. This repo
   will be updated with newer versions - Thats what i hope-
   
 In case of running manually the command `docker-compose run --rm webdriverio
-wdio` to run the tests remember that if you kill the docker process, leaving
+wdio` to run the tests remember that if you kill the docker process, it will leave
 behind an stopped container of webdriverio. Keep an eye on those
 zombie-containers as they may bleed your RAM badly.
 
