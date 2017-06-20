@@ -79,7 +79,7 @@ test whatever app they want to.
 
 First of all, the entire docker-compose is built ad-hoc so there may be a lot of
 inexplicable config errors so you should **really** check that the *config.js*
-file of logic-proxy container and *settings.py* file of charging_backend
+file of logic-proxy container and *settings.py* file of charging\_backend
 container are properly filled.
 
 The most common problem i had was the version control among the
@@ -103,7 +103,7 @@ This instalation expects the ports that will be used to be free, meaning that if
 any of them is occupied by another expernal service, you will have a very bad
 time of crashes, 500 code responses and what-not.
 
-Finally, i have set up a service listening for tcp connections at 54645 port. I
+Finally, i have set up a service listening for tcp connections at 54645 port. In
 case you need to clean the logic\_proxy indexes between tests -And Im sure you
 will- so simply open a tcp connection -Its not needed to send any specific
 message- and the logic\_proxy container should clean the indexes for you. **This
