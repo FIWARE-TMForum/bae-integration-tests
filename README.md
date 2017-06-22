@@ -6,8 +6,14 @@
   * **Business Logic-Proxy**. You should have an image of the logic-proxy
     from
     [GitHub page](https://github.com/FIWARE-TMForum/business-ecosystem-logic-proxy/tree/develop/) built
-    with the tag 'logic_proxy'.
-  * **Business Charging-Backend**. You should have an image of the charging backend from [Github page](https://github.com/FIWARE-TMForum/business-ecosystem-charging-backend/tree/develop) built with the tag 'charging_backend'.
+    with the tag 'logic_proxy'. Or you should be able to easily build one from
+    that repo by doing `docker build -t logic_proxy .` at /docker/ dir.
+  * **Business Charging-Backend**. You should have an image of the charging
+    backend
+    from
+    [Github page](https://github.com/FIWARE-TMForum/business-ecosystem-charging-backend/tree/develop) built
+    with the tag 'charging_backend'. Or you should be able to easily build one from
+    that repo by doing `docker build -t charging_backend .` at /docker/ dir.
   * **Business RSS**. You should have an image of the charging backend
     from
     [Github page](https://github.com/FIWARE-TMForum/business-ecosystem-rss/tree/develop) built
@@ -15,7 +21,9 @@
   * **Webdriverio**. In this repository one webdriverio ready-to-build is
     provided inside *webdriverio* dir: Simply execute `docker build -t
     webdriverio .` on that dir.
-    
+
+- In case you want a different version of any of the containers -You may be
+  developing some feature and want to test that feature- you should change the container dockerfile to pull the repository you need and build your own images.
 ## Steps
 
 1. Comment out all docker-compose entries except biz_db and make `docker-compose
@@ -29,9 +37,11 @@
       needed so Im testing this possibility
 2. Fill up the following fields:
    1. At charging_backend container. *ADMIN_EMAIL=<yourEmail@here.com>*
-   2. At webdriverio container, under volumes. Uncomment the label and fill up the *<PATH/TO/YOUR/WEBDRIVERIO/DIR>*
+   2. At webdriverio container, under volumes. Uncomment the label and fill up
+      the *<PATH/TO/YOUR/WEBDRIVERIO/DIR>* . *This is* **VERY** *important*
 3. Uncomment everything that was previously uncommented. If everything is
-   properly set, then execute `docker-compose run --rm webdriverio wdio` and all
+   properly set, then execute `docker-compose run --rm webdriverio bash -c`
+   `"sleep 60 && wdio"` and all
    should be run smoothly. Give it a few minutes to initialice everything,
    deploy wars, etc. 
 4.  **Important!** The tests might fail because the system is not completely
@@ -81,6 +91,9 @@ First of all, the entire docker-compose is built ad-hoc so there may be a lot of
 inexplicable config errors so you should **really** check that the *config.js*
 file of logic-proxy container and *settings.py* file of charging\_backend
 container are properly filled.
+
+Remember that you should have replaced all important fields of the
+docker-compose with the appropiate info. 
 
 The most common problem i had was the version control among the
 containers: In each of the Dockerfiles there is a *git pull* which chooses the
