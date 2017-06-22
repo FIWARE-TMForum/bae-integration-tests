@@ -40,8 +40,7 @@
    2. At webdriverio container, under volumes. Uncomment the label and fill up
       the *<PATH/TO/YOUR/WEBDRIVERIO/DIR>* . *This is* **VERY** *important*
 3. Uncomment everything that was previously uncommented. If everything is
-   properly set, then execute `docker-compose run --rm webdriverio bash -c`
-   `"sleep 60 && wdio"` and all
+   properly set, then execute `docker-compose run --rm webdriverio bash -c "sleep 60 && wdio"` and all
    should be run smoothly. Give it a few minutes to initialice everything,
    deploy wars, etc. 
 4.  **Important!** The tests might fail because the system is not completely
