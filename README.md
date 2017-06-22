@@ -46,15 +46,16 @@
 4.  **Important!** The tests might fail because the system is not completely
       functional yet.
    1. To check if everything went fine, do `docker ps -a`. This will show you
-      the currently running containers. Find the logic_proxy one, copy the
-      *CONTAINER ID* hash and execute `docker logs <containerID>` to see the log
-      output of that container.
+      the currently running containers. All containers but webdriverio should be up and
+      running. Find the logic\_proxy and charging\_backend ones, copy the *CONTAINER ID* hash and
+      execute `docker logs <containerID>` to see the log output of that container.
       1. You may use the options `--since 1s` to show only the log from 1s ago
          until now.
       2. Aditionaly, you may also use `-f` to keep the log open and running in
          that console.
-    2. The last output of the logic_proxy container should be *<TIMESTAMP>  -
+    2. The last output of the logic\_proxy container should be *<TIMESTAMP>  -
        INFO: Server - Business Ecosystem Logic Proxy starting on port 8000*
+    3. The last output of the charging\_backend container should be *Starting charging server*
 5. A VNC server is provided so admins may see what the tests are doing. In order
    to connect to that server you may use whatever your favourite VNC client is.
    1. I am using vinagre, for simplicity. But as i said, any other VNC client
@@ -115,8 +116,29 @@ This instalation expects the ports that will be used to be free, meaning that if
 any of them is occupied by another expernal service, you will have a very bad
 time of crashes, 500 code responses and what-not.
 
+If you delete one of the docker images -e.g. you made some changes and want to
+update the image-, you may have to recreate the rest of images as they are
+linked -through docker-compose- to the old image and rerunning the entire
+docker-compose with the new one will raise an error.
+
 Finally, i have set up a service listening for tcp connections at 54645 port. In
 case you need to clean the logic\_proxy indexes between tests -And Im sure you
 will- so simply open a tcp connection -Its not needed to send any specific
 message- and the logic\_proxy container should clean the indexes for you. **This
 is being tested so expect some changes and errors**
+
+## Tips and Tricks
+
+If you are using Emacs, you should check
+this [repo](https://github.com/emacs-pe/docker-tramp.el) as it will allow you to
+mess with the running containers easily.
+
+When developing logic_proxy frontend tests, you should be aware that relying
+only on the firefox "Copy selector" debug functionality will be a source of
+errors and problems; Many of the field's selectors are duplicated between
+different UI tabs -e.g. Business and Shipping address creation requires an email
+address. The selector copied by using the firefox debug tool will select both
+fields, raising errors on test runtime-. So, long story short, *always* check
+and re-check your selectors.
+
+
