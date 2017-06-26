@@ -36,9 +36,10 @@
       create and initialice the database. However, glassfish deployment is still
       needed so Im testing this possibility
 2. Fill up the following fields:
-   1. At charging_backend container. *ADMIN_EMAIL=<yourEmail@here.com>*
+   1. At charging\_backend container. *ADMIN\_EMAIL=<yourEmail@here.com>*
    2. At webdriverio container, under volumes. Uncomment the label and fill up
       the *<PATH/TO/YOUR/WEBDRIVERIO/DIR>* . *This is* **VERY** *important*
+   3. At logic_proxy. *<OAUTH\_CLIENT\_ID>* and *<OAUTH\_CLIENT\_ID>*
 3. Uncomment everything that was previously uncommented. If everything is
    properly set, then execute `docker-compose run --rm webdriverio bash -c "sleep 60 && wdio"` and all
    should be run smoothly. Give it a few minutes to initialice everything,
