@@ -1,9 +1,24 @@
-biz_db:
+version: "3"
+services:
+    mongo:
+        image: mongo:3.2
+        restart: always
+        ports:
+            - 27017:27017
+        networks:
+            main:
+        volumes:
+            - ./mongo-data:/data/db
+
+    mysql:
         image: mysql:5.7.16
+        restart: always
         ports:
             - "3333:3306"
         volumes:
             - /var/lib/mysql
+        networks:
+            main:
         environment:
             - MYSQL_ROOT_PASSWORD=toor
             - MYSQL_HOST=localhost
@@ -11,85 +26,102 @@ biz_db:
         volumes:
             - ./mysql/:/var/lib/mysql
 
-biz_apis:
-        image: biz-apis
+    apis:
+        image: conwetlab/biz-ecosystem-apis:develop
+        restart: always
         ports:
-            - "8484:4848"
+            - 4848:4848
+            - 8080:8080
         links:
-            - biz_db
+            - mysql
+        depends_on:
+            - mysql
+        networks:
+            main:
+                aliases:
+                    - apis.docker
         environment:
             - MYSQL_ROOT_PASSWORD=toor
-            - MYSQL_HOST=biz_db
+            - MYSQL_HOST=mysql
 
-logic_proxy:
-        image: logic-proxy
+    proxy:
+        image: conwetlab/biz-ecosystem-logic-proxy:develop
+        restart: always
         links:
-            - biz_db
-            - biz_apis
+            - mongo
+        depends_on:
+            - mongo
+            - apis
         ports:
-            - "8000:8000"
-#       volumes:
-#           - /your/indexes/path:/apis/business-ecosystem-logic-proxy/indexes
+            - 8004:8000
+        networks:
+            main:
+                aliases:
+                    - proxy.docker
+        volumes:
+            - ./proxy-conf:/business-ecosystem-logic-proxy/etc
+            - ./proxy-indexes:/business-ecosystem-logic-proxy/indexes
+            - ./proxy-themes:/business-ecosystem-logic-proxy/themes
+            - ./proxy-static:/business-ecosystem-logic-proxy/static
         environment:
-            - OAUTH2_CLIENT_ID=<OAUTH_CLIENT_ID>
-            - OAUTH2_CLIENT_SECRET=<OAUTH2_CLIENT_SECRET>
-            - BIZ_ECOSYS_PORT=8000
-            - BIZ_ECOSYS_HOST=logic_proxy
-            - APIS_HOST=biz_apis
-            - CHARGING_PORT=8006
-            - CHARGING_HOST=charging_backend
-            - GLASSFISH_PORT=8080
-            - GLASSFISH_HOST=biz_apis
-            - INDEXES_PATH=/business-ecosystem-logic-proxy/indexes/
+            - NODE_ENV=development
 
-charging_backend:
-        image: charging-backend
-        ports:
-            - "8006:8006"
+    charging:
+        image: conwetlab/biz-ecosystem-charging-backend:develop
+        restart: always
         links:
-            - biz_db
-            - biz_apis
-        environment:
-            - BIZ_ECOSYS_PORT=8000
-            - BIZ_ECOSYS_HOST=logic_proxy
-            - PAYPAL_CLIENT_ID=your-paypal-client-id
-            - PAYPAL_CLIENT_SECRET=your-paypal-client-secret
-            - GLASSFISH_HOST=biz_apis
-            - GLASSFISH_PORT=8080
-            - ADMIN_EMAIL=<yourEmail@here.com> # eugenio90@gmail.com
-            - EMAIL_USER=
-            - EMAIL_PASSWD=
-            - EMAIL_SERVER=
-            - EMAIL_SERVER_PORT=
-#       volumes:
-#            - /your/bills/path:/apis/business-ecosystem-charging-backend/src/media/bills
-#            - /your/assets/path:/apis/business-ecosystem-charging-backend/src/media/assets
-#            - /your/plugins/path:/apis/business-ecosystem-charging-backend/src/plugins
-
-biz_rss:
-        image: conwetlab/biz-ecosystem-rss
-        links:
-            - biz_db
-            - biz_apis
+            - mongo
+        depends_on:
+            - mongo
+            - apis
+            - rss
         ports:
-            - "9999:8080"
-            - "4445:4848"
-            - "1111:8181"
+            - 8006:8006
+        networks:
+            main:
+                aliases:
+                    - charging.docker
+        volumes:
+            - ./charging-bills:/business-ecosystem-charging-backend/src/media/bills
+            - ./charging-assets:/business-ecosystem-charging-backend/src/media/assets
+            - ./charging-plugins:/business-ecosystem-charging-backend/src/plugins
+            - ./charging-settings:/business-ecosystem-charging-backend/src/user_settings
+            - ./charging-inst-plugins:/business-ecosystem-charging-backend/src/wstore/asset_manager/resource_plugins/plugins
         environment:
-            - MYSQL_DBUSR=root
-            - MYSQL_DBPASSWORD=toor
-            - MYSQL_HOST=biz_db
+          - PAYPAL_CLIENT_ID=client_id
+          - PAYPAL_CLIENT_SECRET=client_secret
 
-webdriverio:
+    rss:
+        image: conwetlab/biz-ecosystem-rss:develop
+        restart: always
+        ports:
+            - 9999:8080
+            - 4444:4848
+            - 1111:8181
+        links:
+            - mysql
+        depends_on:
+            - mysql
+        networks:
+            main:
+                aliases:
+                    - rss.docker
+        volumes:
+            - ./rss-conf:/etc/default/rss
+
+    webdriverio:
         image: webdriverio
         links:
             - chrome
             - firefox
             - hub
-            - logic_proxy
-            - biz_db
-            - biz_apis
-            - charging_backend
+            - proxy
+            - mysql
+            - apis
+            - mongo
+            - charging
+        networks:
+            main:
         environment:
             - HUB_PORT_4444_TCP_ADDR=hub
             - HUB_PORT_4444_TCP_PORT=4444
@@ -97,16 +129,18 @@ webdriverio:
             # {{replace_with_path_of_wdio.conf.js_file}}
             # - <PATH/TO/YOUR/WEBDRIVERIO/DIR>:/app
 
-hub:
+    hub:
         image: selenium/hub
         ports:
             - 4444:4444
+        networks:
+            main:
         links:
-            - logic_proxy
-            - biz_db
-            - biz_apis
+            - proxy
+            - mysql
+            - apis
 
-firefox:
+    firefox:
         image: selenium/node-firefox-debug
         ports:
             - 5900:5900
@@ -115,11 +149,11 @@ firefox:
             - HUB_PORT_4444_TCP_PORT=4444
         links:
             - hub
-            - logic_proxy
-            - biz_db
-            - biz_apis
+            - proxy
+            - mysql
+            - apis
 
-chrome:
+    chrome:
         image: selenium/node-chrome-debug
         ports:
             - 5901:5901
@@ -127,7 +161,10 @@ chrome:
             - HUB_PORT_4444_TCP_ADDR=hub
             - HUB_PORT_4444_TCP_PORT=4444
         links:
-            - logic_proxy
-            - biz_db
-            - biz_apis
+            - proxy
+            - mysql
+            - apis
             - hub
+
+networks:
+    main:
