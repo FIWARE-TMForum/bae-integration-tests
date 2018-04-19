@@ -6,25 +6,38 @@ services:
         ports:
             - 27017:27017
         networks:
-            main:
+            test:
         volumes:
-            - ./mongo-data:/data/db
+          - ./../mongo-data:/data/db
+
+    # mysql:
+    #     image: mysql:latest
+    #     restart: always
+    #     ports:
+    #         - 3333:3306
+    #     volumes:
+    #         - ./../mysql-data:/var/lib/mysql
+    #     networks:
+    #         test:
+    #     environment:
+    #         - MYSQL_ROOT_PASSWORD=my-secret-pw
+    #         - MYSQL_DATABASE=RSS
 
     mysql:
         image: mysql:5.7.16
         restart: always
         ports:
             - "3333:3306"
-        volumes:
-            - /var/lib/mysql
+        # volumes:
+        #     - /var/lib/mysql
         networks:
-            main:
+            test:
         environment:
-            - MYSQL_ROOT_PASSWORD=toor
-            - MYSQL_HOST=localhost
+            - MYSQL_ROOT_PASSWORD=my-secret-pw
+            - MYSQL_HOST=mysql
             - MYSQL_DATABASE=tests
         volumes:
-            - ./mysql/:/var/lib/mysql
+            - ./../mysql-data:/var/lib/mysql
 
     apis:
         image: conwetlab/biz-ecosystem-apis:develop
@@ -37,11 +50,11 @@ services:
         depends_on:
             - mysql
         networks:
-            main:
+            test:
                 aliases:
                     - apis.docker
         environment:
-            - MYSQL_ROOT_PASSWORD=toor
+            - MYSQL_ROOT_PASSWORD=my-secret-pw
             - MYSQL_HOST=mysql
 
     proxy:
@@ -55,14 +68,14 @@ services:
         ports:
             - 8004:8000
         networks:
-            main:
+            test:
                 aliases:
                     - proxy.docker
         volumes:
-            - ./proxy-conf:/business-ecosystem-logic-proxy/etc
-            - ./proxy-indexes:/business-ecosystem-logic-proxy/indexes
-            - ./proxy-themes:/business-ecosystem-logic-proxy/themes
-            - ./proxy-static:/business-ecosystem-logic-proxy/static
+            - ./../proxy-conf:/business-ecosystem-logic-proxy/etc
+            - ./../proxy-indexes:/business-ecosystem-logic-proxy/indexes
+            - ./../proxy-themes:/business-ecosystem-logic-proxy/themes
+            - ./../proxy-static:/business-ecosystem-logic-proxy/static
         environment:
             - NODE_ENV=development
 
@@ -78,15 +91,15 @@ services:
         ports:
             - 8006:8006
         networks:
-            main:
+            test:
                 aliases:
                     - charging.docker
         volumes:
-            - ./charging-bills:/business-ecosystem-charging-backend/src/media/bills
-            - ./charging-assets:/business-ecosystem-charging-backend/src/media/assets
-            - ./charging-plugins:/business-ecosystem-charging-backend/src/plugins
-            - ./charging-settings:/business-ecosystem-charging-backend/src/user_settings
-            - ./charging-inst-plugins:/business-ecosystem-charging-backend/src/wstore/asset_manager/resource_plugins/plugins
+            - ./../charging-bills:/business-ecosystem-charging-backend/src/media/bills
+            - ./../charging-assets:/business-ecosystem-charging-backend/src/media/assets
+            - ./../charging-plugins:/business-ecosystem-charging-backend/src/plugins
+            - ./../charging-settings:/business-ecosystem-charging-backend/src/user_settings
+            - ./../charging-inst-plugins:/business-ecosystem-charging-backend/src/wstore/asset_manager/resource_plugins/plugins
         environment:
           - PAYPAL_CLIENT_ID=client_id
           - PAYPAL_CLIENT_SECRET=client_secret
@@ -103,11 +116,11 @@ services:
         depends_on:
             - mysql
         networks:
-            main:
+            test:
                 aliases:
                     - rss.docker
         volumes:
-            - ./rss-conf:/etc/default/rss
+            - ./../rss-conf:/etc/default/rss
 
     webdriverio:
         image: webdriverio
@@ -121,20 +134,26 @@ services:
             - mongo
             - charging
         networks:
-            main:
+            test:
+              aliases:
+                - webdriverio.docker
         environment:
-            - HUB_PORT_4444_TCP_ADDR=hub
+            - HUB_PORT_4444_TCP_ADDR=hub.docker
             - HUB_PORT_4444_TCP_PORT=4444
+            - MYSQL_ROOT_PASSWORD=my-secret-pw
         volumes:
             # {{replace_with_path_of_wdio.conf.js_file}}
             # - <PATH/TO/YOUR/WEBDRIVERIO/DIR>:/app
+            - ./webdriverio:/app
 
     hub:
         image: selenium/hub
         ports:
-            - 4444:4444
+            - 6666:4444
         networks:
-            main:
+            test:
+              aliases:
+                - hub.docker
         links:
             - proxy
             - mysql
@@ -145,26 +164,35 @@ services:
         ports:
             - 5900:5900
         environment:
-            - HUB_PORT_4444_TCP_ADDR=hub
+            - HUB_PORT_4444_TCP_ADDR=hub.docker
             - HUB_PORT_4444_TCP_PORT=4444
         links:
             - hub
             - proxy
             - mysql
             - apis
+        networks:
+            test:
+              aliases:
+                - firefox.docker
 
     chrome:
         image: selenium/node-chrome-debug
         ports:
             - 5901:5901
         environment:
-            - HUB_PORT_4444_TCP_ADDR=hub
+            - HUB_PORT_4444_TCP_ADDR=hub.docker
             - HUB_PORT_4444_TCP_PORT=4444
         links:
             - proxy
             - mysql
             - apis
             - hub
+        networks:
+            test:
+              aliases:
+                - chrome.docker
 
 networks:
-    main:
+    test:
+#      external: false

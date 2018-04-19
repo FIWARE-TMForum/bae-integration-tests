@@ -4,10 +4,11 @@ var mysql = require('mysql');
 fdescribe('Integration tests', function () {
 
     var connection = mysql.createConnection({
-        host: 'biz_db',
+//        host: 'biz_db',
+        host: 'mysql',
         port: '3306',
         user: 'root',
-        password: 'toor',
+        password: 'my-secret-pw',
         multipleStatements: true//,
         //debug: true
     });
@@ -84,7 +85,7 @@ fdescribe('Integration tests', function () {
                                 console.log(db + ": Success");
                             }
                         });
-                    }
+                   }
                 }
             });
         });
@@ -99,7 +100,7 @@ fdescribe('Integration tests', function () {
     describe('User.', function () {
 
 	beforeAll(function() {
-            browser.url('http://logic_proxy:8000/#/offering');
+            browser.url('http://proxy.docker:8004/#/offering');
 	    // Populate DDBB
 	});
 
@@ -107,11 +108,11 @@ fdescribe('Integration tests', function () {
 	    // Depopulate DDBB
 	});
 	
-	userNormal = {id: 'patata@mailinator.com',
-		      pass: 'test'};
+        userNormal = {id: 'test1@test1.com',
+		      pass: 'test1'};
 
-	userProvider = {id: '58d5266e056d1@mailbox92.biz',
-			pass: 'test'};
+	userProvider = {id: 'idm',
+			pass: 'idm'};
 
         function waitUntilTitle(title, done) {
             browser.waitUntil(function() {
@@ -369,7 +370,7 @@ fdescribe('Integration tests', function () {
 	});
 
         it('Cannot create an offering without a catalog nor product Spec', function(done) {
-            browser.url('http://logic_proxy:8000/#/offering');
+            browser.url('http://proxy.docker:8004/#/offering');
             
             // My stock
             browser.waitForExist('.bg-view3'); 
@@ -430,7 +431,7 @@ fdescribe('Integration tests', function () {
 	    //     // Selenium has a bug where it wont load the second instruction of a goTo("URL"). I dont even know why this work around works. But it does.
 	    //     // If Jesus can walk on water. Can he swim on land?
 	    //     browser.navigate().to("chrome://version/")
-	    //     browser.navigate().to("http://localhost:8000/#/offering")
+	    //     browser.navigate().to("http://localhost:8004/#/offering")
 	});
 
         it('Cannot create an offering without a product Spec', function(done) {
