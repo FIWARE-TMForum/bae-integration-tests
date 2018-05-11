@@ -164,6 +164,18 @@ fdescribe('Integration tests', function () {
             value ? browser.setValue(selector, value) : browser.setValue(selector, '');
         };
 
+	function getElementByCSS(selector, attribute, compareValue) {
+	    return $$(selector).filter(x => (x.getAttribute(attribute) === compareValue) && x.isVisible());
+	};
+
+	function setElementValueByCSS(selector, attribute, compareValue, inputValue) {
+	    getElementByCSS(selector, attribute, compareValue).forEach(x => x.setValue(inputValue));
+	};
+
+	function clickElementByCSS(selector, attribute, compareValue) {
+	    getElementByCSS(selector, attribute, compareValue).forEach(x => x.click());
+	};
+
         function createProductSpec(browser, product, expectedProduct, done) {
             var nextButton = 'btn btn-default z-depth-1';
             // var stringSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[1]';
@@ -245,32 +257,24 @@ fdescribe('Integration tests', function () {
         function shippingAddressCreation(shipAdd){
             var properties = ['emailAddress', 'street', 'postcode', 'city',
                               'stateOrProvince', 'type', 'number'];
-            // var emailSelector = 'html.ng-scope body.ng-scope div.container div.row div.col-xs-12.col-md-9 ui-view.ng-scope ui-view.ng-scope div.row.ng-scope div.col-xs-12 ui-view.ng-scope div.row.ng-scope div.col-xs-12.ng-scope div.panel.panel-default.z-depth-1 div.panel-body.ng-scope shipping-address-form.ng-isolate-scope form.ng-pristine.ng-valid-email.ng-invalid.ng-invalid-required.ng-valid-maxlength.ng-valid-international-phone-number div.row div.col-xs-12 div.row div.col-sm-12 div.form-group.has-error input.form-control.ng-pristine.ng-valid-email.ng-invalid.ng-invalid-required.ng-touched';
-
-	    var emailSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/div/div[2]/ui-view/div/div/div[2]/div/shipping-address-form/form/div/div[1]/div[2]/div/div/input';
-	    
             browser.waitForExist('[name=emailAddress]');
             browser.waitForEnabled('[name=emailAddress]');
             // browser.debug()
             if (!shipAdd || !properties.every(x => x in shipAdd)){
                 expect(browser.isExisting('[class="btn btn-warning"][disabled="disabled"]')).toBe(true);
             } else {
-                browser.debug();
-
-                secureSetValue(emailSelector, shipAdd.emailAddress);
-                browser.debug();
-                secureSetValue('[name=street]', shipAdd.street);
-                browser.debug();
-                secureSetValue('[name=postcode]', shipAdd.postcode);
-                secureSetValue('[name=city]', shipAdd.city);
-                secureSetValue('[name=stateOrProvince]', shipAdd.stateOrProvince);
-                secureSetValue('[name=type]', shipAdd.type);
-                secureSetValue('[name=number]', shipAdd.number);
-                // browser.debug();
-                browser.click('shipping-address-form.ng-isolate-scope:nth-child(3) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(3) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(210)');
-                browser.click('.dropup > li:nth-child(205)');
-                expect(browser.isEnabled('.btn-warning')).toBe(true);
-                browser.click('.btn-warning');
+		browser.debug();
+		setElementValueByCSS('input', 'name', 'emailAddress', shipAdd.emailAddress);
+                setElementValueByCSS('input', 'name', 'street', shipAdd.street);
+                setElementValueByCSS('input', 'name', 'postcode', shipAdd.emailAddress);
+                setElementValueByCSS('input', 'name', 'city', shipAdd.city);
+		setElementValueByCSS('input', 'name', 'stateOrProvince', shipAdd.stateOrProvince);
+		clickElementByCSS('option.ng-binding.ng-scope', 'value', shipAdd.country); // country selection dropdown
+		setElementValueByCSS('input', 'name', 'type', shipAdd.type);
+		setElementValueByCSS('input', 'name', 'number', shipAdd.number);
+		expect(browser.isEnabled('.btn-warning')).toBe(true);
+		browser.debug();
+		clickElementByCSS('a.btn', 'ng-click', 'createVM.create(createVM.form)'); // create button
                 // TODO. Make expect in case of correct creation
             }
         };
@@ -336,7 +340,8 @@ fdescribe('Integration tests', function () {
                            city: 'Tokyo',
                            stateOrProvince: 'Tokyo',
                            type: 'warehouse',
-                           number: '2'};
+                           number: '666666666',
+			   country: 'ES'};
 
             browser.waitForExist('.btn.btn-success');
 
