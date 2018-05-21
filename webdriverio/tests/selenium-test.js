@@ -23,16 +23,16 @@ fdescribe('Integration tests', function () {
                   'RSS'];
 
     var indexes = ['catalogs',
-		   'inventory',
-		   'offerings',
-		   'orders',
-		   'products'];
+                   'inventory',
+                   'offerings',
+                   'orders',
+                   'products'];
 
     var indexPath = '/proxy-indexes/';
 
     var proxy_location = 'http://proxy.docker:8004/#/offering';
 
-    beforeAll(function() {
+    beforeAll(function(done) {
         connection.connect(function(err) {
             if (err) {
                 console.error('error connecting: ' + err.stack);
@@ -41,8 +41,11 @@ fdescribe('Integration tests', function () {
 
             console.log('connected as id ' + connection.threadId);
         });
-        cleanDB();
-        cleanIndexes();
+	cleanIndexes();
+	// cleanDB().then(function(){
+	//     console.log("out of promise");
+	//     done();
+    //});
         // DDBB and indexes must be cleaned from data, the only thing it should have is the schema.
     });
 
@@ -51,82 +54,53 @@ fdescribe('Integration tests', function () {
         browser.end(done);
         //  webdriverio.end();
     });
-    
+
     function deleteFolder(path){
-	console.log("Deleting " + path + "index...");
-	if (fs.existsSync(path)) {
-	    fs.readdirSync(path).forEach(function(file, index){
-		var curPath = path + "/" + file;
-		if (fs.lstatSync(curPath).isDirectory()) { // recurse
-		    deleteFolder(curPath);
-		} else { // delete file
-		    fs.unlinkSync(curPath);
-		}
-	    });
-	    fs.rmdirSync(path);
-	}
+        console.log("Deleting " + path + "index...");
+        if (fs.existsSync(path)) {
+            fs.readdirSync(path).forEach(function(file, index){
+                var curPath = path + "/" + file;
+                if (fs.lstatSync(curPath).isDirectory()) { // recurse
+                    deleteFolder(curPath);
+                } else { // delete file
+                    fs.unlinkSync(curPath);
+                }
+            });
+            fs.rmdirSync(path);
+        }
     };
 
 
     function cleanIndexes() {
-	indexes.map(x => deleteFolder(indexPath + x));
+        indexes.map(x => deleteFolder(indexPath + x));
     };
 
     function cleanDB() {
-        console.log("Cleaning database");
-        connection.query("SET FOREIGN_KEY_CHECKS=0;", function(error, results, fields) {
-            if (error){
-                console.log("Error at setting foreign keys checks to 0. " + error);
-            }
-        });
-        dbases.forEach(function(db) {
-            connection.query("SELECT CONCAT('DELETE FROM ', ?, '.', TABLE_NAME,';') AS truncateCommand FROM information_schema.TABLES WHERE TABLE_SCHEMA = ?;", [db, db], function(error, results, fields) {
-                if (error){
-                    console.log("Database error while building the querys. " + error);
-                }
-                else {
-                    results.forEach(function(obj) {
-                        // if (db === 'DSPRODUCTCATALOG2'){
-                        //     console.log(obj)
-                        // }
-                        connection.query(obj.truncateCommand, function(err, res, flds) {
-                            if (err){
-                                // Sorry, whoever is reading this, for this "If this doesnt work... Repeat it". Sometimes it works, sometimes it doesnt.
-                                // There may be some foreign key errors in case of deleting the parent first so. Whatever.
-                                console.log("Error cleaning a table. Repeating the command.");
-                                connection.query(obj.truncateCommand, function(errorMsg, resultInsert, fds){
-                                    if (errorMsg){
-                                        console.log("Unexpected database error." + errorMsg);
-                                    }
-                                });
-                            }
-                        });
-                    });
-                    if (db !== 'RSS'){
-                        connection.query("INSERT INTO "+ db + ".SEQUENCE VALUES ('SEQ_GEN',0);", function(errorMsg, resultInsert, fields){
-                            if (errorMsg){
-                                console.log("Database error while initializing the tables. " + errorMsg);
-                            }else{
-                                console.log(db + ": Success");
-                            }
-                        });
-                    }
-                }
-            });
-        });
-        connection.query("SET FOREIGN_KEY_CHECKS=1;", function(error, results, fields) {
-            if (error){
-                console.log("Error at setting foreign keys checks to 1. " + error);
-            }
-        });
-        console.log("Database cleaned");
+	console.log("Loading SQL dump...");
+	return new Promise(function(resolve, reject){
+	    connection.query(fs.readFileSync('/app/tests/initialstate_dbs.sql').toString(), function(error, results, fields) {
+		if (error) {
+		    reject("error during dump: " + error);
+		}
+		else {
+		    resolve("dump loaded");
+		}
+	    });
+	});
     };
 
     describe('User.', function () {
 
         beforeAll(function() {
-            browser.url(proxy_location);
-            // Populate DDBB
+	    // cleanDB().then(function() {
+	    // 	browser.url(proxy_location);
+	    // 	done();
+	    // 	return;
+	    //});
+	    cleanDB().then((msg) => {
+		console.log(msg);
+		browser.url(proxy_location);
+	    });
         });
 
         afterAll(function(done) {
@@ -147,7 +121,8 @@ fdescribe('Integration tests', function () {
         }
 
         function checkLogin(user, expectedName, done) {
-            waitUntilTitle("Biz Ecosystem", done);
+	    console.log("inside checkLogin");
+            browser.waitForExist(".btn.btn-warning.navbar-btn.navbar-right.z-depth-1");
             browser.click(".btn.btn-warning.navbar-btn.navbar-right.z-depth-1"); // Sign in
             browser.waitForExist('#frontpage > div > div.login > div > div > form > div.modal-body.clearfix > div:nth-child(4) > label', 20000);
             browser.setValue('[name=username]', user.id);
@@ -164,17 +139,17 @@ fdescribe('Integration tests', function () {
             value ? browser.setValue(selector, value) : browser.setValue(selector, '');
         };
 
-	function getElementByCSS(selector, attribute, compareValue) {
-	    return $$(selector).filter(x => (x.getAttribute(attribute) === compareValue) && x.isVisible());
-	};
+        function getElementByCSS(selector, attribute, compareValue) {
+            return $$(selector).filter(x => (x.getAttribute(attribute) === compareValue) && x.isVisible());
+        };
 
-	function setElementValueByCSS(selector, attribute, compareValue, inputValue) {
-	    getElementByCSS(selector, attribute, compareValue).forEach(x => x.setValue(inputValue));
-	};
+        function setElementValueByCSS(selector, attribute, compareValue, inputValue) {
+            getElementByCSS(selector, attribute, compareValue).forEach(x => x.setValue(inputValue));
+        };
 
-	function clickElementByCSS(selector, attribute, compareValue) {
-	    getElementByCSS(selector, attribute, compareValue).forEach(x => x.click());
-	};
+        function clickElementByCSS(selector, attribute, compareValue) {
+            getElementByCSS(selector, attribute, compareValue).forEach(x => x.click());
+        };
 
         function createProductSpec(browser, product, expectedProduct, done) {
             var nextButton = 'btn btn-default z-depth-1';
@@ -255,51 +230,58 @@ fdescribe('Integration tests', function () {
         };
 
         function shippingAddressCreation(shipAdd){
-            var properties = ['emailAddress', 'street', 'postcode', 'city',
-                              'stateOrProvince', 'type', 'number'];
+            var keyboardProperties = ['emailAddress', 'street', 'postcode', 'city', 'stateOrProvince', 'type', 'number'];
+            var clickableProperties = ['country'];
+
             browser.waitForExist('[name=emailAddress]');
             browser.waitForEnabled('[name=emailAddress]');
-            // browser.debug()
             if (!shipAdd || !properties.every(x => x in shipAdd)){
                 expect(browser.isExisting('[class="btn btn-warning"][disabled="disabled"]')).toBe(true);
             } else {
-		browser.debug();
-		setElementValueByCSS('input', 'name', 'emailAddress', shipAdd.emailAddress);
-                setElementValueByCSS('input', 'name', 'street', shipAdd.street);
-                setElementValueByCSS('input', 'name', 'postcode', shipAdd.emailAddress);
-                setElementValueByCSS('input', 'name', 'city', shipAdd.city);
-		setElementValueByCSS('input', 'name', 'stateOrProvince', shipAdd.stateOrProvince);
-		clickElementByCSS('option.ng-binding.ng-scope', 'value', shipAdd.country); // country selection dropdown
-		setElementValueByCSS('input', 'name', 'type', shipAdd.type);
-		setElementValueByCSS('input', 'name', 'number', shipAdd.number);
-		expect(browser.isEnabled('.btn-warning')).toBe(true);
-		browser.debug();
-		clickElementByCSS('a.btn', 'ng-click', 'createVM.create(createVM.form)'); // create button
-                // TODO. Make expect in case of correct creation
+                keyboardProperties.forEach(x => $('[name=' + x + ']').setValue(shipAdd[x]));
+                clickableProperties.forEach(x => $('[value=' + x + ']')).click();
+                expect(browser.isEnabled('.btn-warning')).toBe(true);
+                $('.btn-warning').click();
+
             }
         };
 
         function businessAddressCreation(busAdd) {
-            browser.waitForExist('[name=emailAddress]');
-            browser.waitForEnabled('[name=emailAddress]');
-            if (busAdd.medium === 'Email address') {
-                secureSetValue('[name=emailAddress]', busAdd.email);
-            }else if (busAdd.medium === 'Telephone number') {
-                browser.click('business-address-form.ng-scope > form:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > select:nth-child(2) > option:nth-child(2)');
-                secureSetValue('[name=type]', busAdd.type);
-                browser.click('form.ng-dirty > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > ul:nth-child(2) > li:nth-child(205) > span:nth-child(2)');
-            }else if (busAdd.medium === 'Postal address') {
-                browser.click('business-address-form.ng-scope > form:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > select:nth-child(2) > option:nth-child(3)');
-                secureSetValue('[name=street]', busAdd.street);
-                secureSetValue('[name=postcode]', busAdd.postcode);
-                secureSetValue('[name=city]', busAdd.city);
-                secureSetValue('[name=stateOrProvince]', busAdd.stateOrProvince);
-                browser.click('form.ng-dirty > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(210)');
-            }else{
-                // browser.debug()
-                expect(browser.isExisting('[class="btn btn-warning"][disabled="disabled"]')).toBe(true);
-                return;
+            var keyboardProperties = ['emailAddress', 'type', 'number', 'street', 'postCode', 'city', 'stateOrProvince'];
+
+            browser.waitForExist('[name=mediumType]');
+            browser.waitForEnabled('[name=mediumType]');
+            browser.debug();
+
+            $('[value=' + busAdd.medium + ']').click();
+
+            keyboardProperties.forEach(x => {
+                if($('[name=' + x + ']').isVisible())
+                    $('[name=' + x + ']').setValue(busAdd[x]);
+            });
+            if(busAdd.medium === 'TelephoneNumber') {
+                $('[class=flag-container]').click();
+                $('[data-dial-code="' + busAdd.phoneCode + '"]').click();
             }
+            $('.btn-warning').click();
+            // if (busAdd.medium === 'Email address') {
+            //     secureSetValue('[name=emailAddress]', busAdd.email);
+            // }else if (busAdd.medium === 'Telephone number') {
+            //     browser.click('business-address-form.ng-scope > form:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > select:nth-child(2) > option:nth-child(2)');
+            //     secureSetValue('[name=type]', busAdd.type);
+            //     browser.click('form.ng-dirty > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > ul:nth-child(2) > li:nth-child(205) > span:nth-child(2)');
+            // }else if (busAdd.medium === 'Postal address') {
+            //     browser.click('business-address-form.ng-scope > form:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > select:nth-child(2) > option:nth-child(3)');
+            //     secureSetValue('[name=street]', busAdd.street);
+            //     secureSetValue('[name=postcode]', busAdd.postcode);
+            //     secureSetValue('[name=city]', busAdd.city);
+            //     secureSetValue('[name=stateOrProvince]', busAdd.stateOrProvince);
+            //     browser.click('form.ng-dirty > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(210)');
+            // }else{
+            //     // browser.debug()
+            //     expect(browser.isExisting('[class="btn btn-warning"][disabled="disabled"]')).toBe(true);
+            //     return;
+            // }
             browser.waitForEnabled('btn btn-warning');
             browser.click('btn btn-warning');
             browser.waitForExist('div.table-responsive:nth-child(3) > table:nth-child(1) > tbody:nth-child(2)');
@@ -316,10 +298,13 @@ fdescribe('Integration tests', function () {
         // expect(title).toBe('Biz Ecosystem');
 
         fit('Should be able to log in with a correct username and password', function (done) {
-            checkLogin(userProvider, 'idm', done);
+	    console.log("inside fit 1");
+	    // browser.debug();
+	    checkLogin(userProvider, 'idm', done);
         });
 
         fit('Should be able to update his/her info', function(done) {
+	    waitUntilTitle('Biz Ecosystem');
             browser.click('.dropdown-toggle.has-stack');
             browser.click('[ui-sref=settings]');
 
@@ -341,7 +326,7 @@ fdescribe('Integration tests', function () {
                            stateOrProvince: 'Tokyo',
                            type: 'warehouse',
                            number: '666666666',
-			   country: 'ES'};
+                           country: 'ES'};
 
             browser.waitForExist('.btn.btn-success');
 
@@ -353,8 +338,8 @@ fdescribe('Integration tests', function () {
 
         });
 
-        it('Should be able to create a business address', function(done) {
-            var busAdd = {medium: 'Email address',
+        fit('Should be able to create a business address with email', function(done) {
+            var busAdd = {medium: 'Email',
                           emailAddress: 'testEmail@email.com'};
 
             browser.waitForExist('.dropdown-toggle.has-stack');
@@ -365,6 +350,50 @@ fdescribe('Integration tests', function () {
 
             // Business Address tab
             browser.click('div.panel:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)');
+
+            //browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
+
+            businessAddressCreation(busAdd);
+        });
+
+        fit('Should be able to create a business address with phone number', function(done) {
+            var busAdd = {medium: 'TelephoneNumber',
+                          type: 'USA Mobile phone',
+                          phoneCode: '1',
+                          number: "201-555-5555"
+                         };
+
+            // browser.waitForExist('.dropdown-toggle.has-stack');
+
+            // browser.click('.dropdown-toggle.has-stack');
+            // browser.click('[ui-sref=settings]');
+            // browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
+
+            // // Business Address tab
+            // browser.click('div.panel:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)');
+
+            //browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
+
+            businessAddressCreation(busAdd);
+        });
+
+        fit('Should be able to create a business address with postal address', function(done) {
+            var busAdd = {medium: 'PostalAddress',
+                          street: 'Fake St. 123',
+                          postCode: '1337',
+                          city: 'Atlantis',
+                          stateOrProvince: 'One of them',
+                          country: 'BS'
+                         };
+
+            // browser.waitForExist('.dropdown-toggle.has-stack');
+
+            // browser.click('.dropdown-toggle.has-stack');
+            // browser.click('[ui-sref=settings]');
+            // browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
+
+            // // Business Address tab
+            // browser.click('div.panel:nth-child(1) > ul:nth-child(1) > li:nth-child(2) > a:nth-child(1)');
 
             //browser.click('ul.nav:nth-child(2) > li:nth-child(2) > a:nth-child(1)');
 
