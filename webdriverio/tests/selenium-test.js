@@ -1,7 +1,7 @@
 var fs = require("fs");
 var mysql = require('mysql');
 
-fdescribe('Integration tests', function () {
+describe('Integration tests', function () {
 
     var connection = mysql.createConnection({
         //        host: 'biz_db',
@@ -41,11 +41,11 @@ fdescribe('Integration tests', function () {
 
             console.log('connected as id ' + connection.threadId);
         });
-	cleanIndexes();
-	// cleanDB().then(function(){
-	//     console.log("out of promise");
-	//     done();
-    //});
+        cleanIndexes();
+        // cleanDB().then(function(){
+        //     console.log("out of promise");
+        //     done();
+        //});
         // DDBB and indexes must be cleaned from data, the only thing it should have is the schema.
     });
 
@@ -76,31 +76,26 @@ fdescribe('Integration tests', function () {
     };
 
     function cleanDB() {
-	console.log("Loading SQL dump...");
-	return new Promise(function(resolve, reject){
-	    connection.query(fs.readFileSync('/app/tests/initialstate_dbs.sql').toString(), function(error, results, fields) {
-		if (error) {
-		    reject("error during dump: " + error);
-		}
-		else {
-		    resolve("dump loaded");
-		}
-	    });
-	});
+        console.log("Loading SQL dump and creation...");
+        return new Promise(function(resolve, reject){
+            connection.query(fs.readFileSync('/app/tests/initialstate_dbs.sql').toString(), function(error, results, fields) {
+                if (error) {
+                    reject("error during dump: " + error);
+                }
+                else {
+                    resolve("Database restored!");
+                }
+            });
+        });
     };
 
     describe('User.', function () {
 
         beforeAll(function() {
-	    // cleanDB().then(function() {
-	    // 	browser.url(proxy_location);
-	    // 	done();
-	    // 	return;
-	    //});
-	    cleanDB().then((msg) => {
-		console.log(msg);
-		browser.url(proxy_location);
-	    });
+            cleanDB().then((msg) => {
+                console.log(msg);
+                browser.url(proxy_location);
+            });
         });
 
         afterAll(function(done) {
@@ -120,8 +115,7 @@ fdescribe('Integration tests', function () {
             browser.call(done);
         }
 
-        function checkLogin(user, expectedName, done) {
-	    console.log("inside checkLogin");
+        function checkLogin(user, expectedName) {
             browser.waitForExist(".btn.btn-warning.navbar-btn.navbar-right.z-depth-1");
             browser.click(".btn.btn-warning.navbar-btn.navbar-right.z-depth-1"); // Sign in
             browser.waitForExist('#frontpage > div > div.login > div > div > form > div.modal-body.clearfix > div:nth-child(4) > label', 20000);
@@ -132,8 +126,28 @@ fdescribe('Integration tests', function () {
             browser.waitForExist('body > div.navbar.navbar-default.navbar-fixed-top.z-depth-2 > div > div.navbar-text.ng-binding', 60000);
             var name = browser.getText('.has-stack > span:nth-child(2)');
             expect(name).toBe(expectedName);
-            //browser.call(done)
         };
+
+        function processForm(form) {
+            Object.keys(form).forEach( x => {
+                if (form[x].kbd) {
+                    $('[name=' + x + ']').setValue(form[x].val);
+                } else {
+                    $('[value=' + form[x].val + ']').click();
+                }
+            });
+        }
+
+        function checkValues(form) {
+            Object.keys(form).forEach( x => {
+		if (form[x].kbd) {
+                    expect($('[name=' + x + ']').getValue()).toBe(form[x].val);
+                } else {
+                    expect($('[value=' + form[x].val + ']').isSelected()).toBe(true);
+                }
+            });
+        }
+
 
         function secureSetValue(selector, value) {
             value ? browser.setValue(selector, value) : browser.setValue(selector, '');
@@ -239,7 +253,7 @@ fdescribe('Integration tests', function () {
                 expect(browser.isExisting('[class="btn btn-warning"][disabled="disabled"]')).toBe(true);
             } else {
                 keyboardProperties.forEach(x => $('[name=' + x + ']').setValue(shipAdd[x]));
-                clickableProperties.forEach(x => $('[value=' + x + ']')).click();
+                clickableProperties.forEach(x => $('[value=' + shipAdd[x] + ']')).click();
                 expect(browser.isEnabled('.btn-warning')).toBe(true);
                 $('.btn-warning').click();
 
@@ -264,29 +278,27 @@ fdescribe('Integration tests', function () {
                 $('[data-dial-code="' + busAdd.phoneCode + '"]').click();
             }
             $('.btn-warning').click();
-            // if (busAdd.medium === 'Email address') {
-            //     secureSetValue('[name=emailAddress]', busAdd.email);
-            // }else if (busAdd.medium === 'Telephone number') {
-            //     browser.click('business-address-form.ng-scope > form:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > select:nth-child(2) > option:nth-child(2)');
-            //     secureSetValue('[name=type]', busAdd.type);
-            //     browser.click('form.ng-dirty > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > ul:nth-child(2) > li:nth-child(205) > span:nth-child(2)');
-            // }else if (busAdd.medium === 'Postal address') {
-            //     browser.click('business-address-form.ng-scope > form:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > select:nth-child(2) > option:nth-child(3)');
-            //     secureSetValue('[name=street]', busAdd.street);
-            //     secureSetValue('[name=postcode]', busAdd.postcode);
-            //     secureSetValue('[name=city]', busAdd.city);
-            //     secureSetValue('[name=stateOrProvince]', busAdd.stateOrProvince);
-            //     browser.click('form.ng-dirty > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(3) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(210)');
-            // }else{
-            //     // browser.debug()
-            //     expect(browser.isExisting('[class="btn btn-warning"][disabled="disabled"]')).toBe(true);
-            //     return;
-            // }
             browser.waitForEnabled('btn btn-warning');
             browser.click('btn btn-warning');
             browser.waitForExist('div.table-responsive:nth-child(3) > table:nth-child(1) > tbody:nth-child(2)');
             expect(browser.value('tr.ng-scope:nth-child(1) > th:nth-child(1)')).toBe(busAdd.medium);
         };
+
+        function profileUpdate(profileInfo) {
+            // Change some of the values
+	    // browser.debug();
+            browser.waitForExist('[name=firstName]');
+            processForm(profileInfo);
+            browser.click('.btn.btn-success'); // update
+            browser.waitForExist('form.ng-pristine:nth-child(3) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > input:nth-child(2)'); // I don't know what is this
+            // Check update
+	    // browser.debug();
+            browser.click('.dropdown-toggle.has-stack'); // click user button
+            browser.click('[ui-sref=settings]'); // click settings
+	    browser.debug();
+	    checkValues(profileInfo);
+        }
+
         /*
           As far as i know, these test must be passed in this order as they emulate user possible actions.
         */
@@ -297,28 +309,40 @@ fdescribe('Integration tests', function () {
         // var title = browser.getTitle();
         // expect(title).toBe('Biz Ecosystem');
 
-        fit('Should be able to log in with a correct username and password', function (done) {
-	    console.log("inside fit 1");
-	    // browser.debug();
-	    checkLogin(userProvider, 'idm', done);
+        // Check test-cases.org file to see a detailed explanation
+        it('Test Case 1: Product creation and launch', function (done) {
+            var profileInfo = {
+                firstName: { val: 'testName', kbd: true },
+                lastName: { val: 'testSurName', kbd: true },
+                title: { val: 'Mr', kbd: false },
+                maritalStatus: { val: 'Single', kbd: false },
+                gender: { val: 'Male', kbd: false },
+                nationality: { val: 'Spain', kbd: true },
+                birthDate: { val: '1980-12-12', kbd: true },
+                countryOfBirth: { val: 'ES', kbd: false },
+                placeOfBirth: { val: 'Albacete', kbd: true }
+            };
+
+            // console.log("---------- TC 1 ------------");
+            // browser.debug();
+            // console.log("Checking login...");
+            checkLogin(userProvider, 'idm', done);
+	    browser.waitForExist(".dropdown-toggle.has-stack"); // wait for page to load
+            browser.click('.dropdown-toggle.has-stack'); // click user button
+            browser.click('[ui-sref=settings]'); // click settings
+            profileUpdate(profileInfo);
+
+	    browser.debug();
+
+	    
         });
 
-        fit('Should be able to update his/her info', function(done) {
-	    waitUntilTitle('Biz Ecosystem');
-            browser.click('.dropdown-toggle.has-stack');
-            browser.click('[ui-sref=settings]');
+        xit('Should be able to update his/her info', function(done) {
+            waitUntilTitle('Biz Ecosystem');
 
-            // Change some of the values
-            browser.waitForExist('[name=firstName]');
-            browser.setValue('[name=firstName]', 'testName');
-            browser.setValue('[name=lastName]', 'testSurName');
-            browser.click('.btn.btn-success');
-            browser.waitForExist('form.ng-pristine:nth-child(3) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1) > input:nth-child(2)');
-            var name = browser.getValue('[name=firstName]');
-            expect(name).toBe('testName');
         });
 
-        fit('Should be able to create a shipping address', function(done) {
+        xit('Should be able to create a shipping address', function(done) {
             var shipAdd = {emailAddress: 'testEmail@email.com',
                            street: 'fighter',
                            postcode: '1200000',
@@ -338,7 +362,7 @@ fdescribe('Integration tests', function () {
 
         });
 
-        fit('Should be able to create a business address with email', function(done) {
+        xit('Should be able to create a business address with email', function(done) {
             var busAdd = {medium: 'Email',
                           emailAddress: 'testEmail@email.com'};
 
@@ -356,7 +380,7 @@ fdescribe('Integration tests', function () {
             businessAddressCreation(busAdd);
         });
 
-        fit('Should be able to create a business address with phone number', function(done) {
+        xit('Should be able to create a business address with phone number', function(done) {
             var busAdd = {medium: 'TelephoneNumber',
                           type: 'USA Mobile phone',
                           phoneCode: '1',
@@ -377,7 +401,7 @@ fdescribe('Integration tests', function () {
             businessAddressCreation(busAdd);
         });
 
-        fit('Should be able to create a business address with postal address', function(done) {
+        xit('Should be able to create a business address with postal address', function(done) {
             var busAdd = {medium: 'PostalAddress',
                           street: 'Fake St. 123',
                           postCode: '1337',
@@ -400,7 +424,7 @@ fdescribe('Integration tests', function () {
             businessAddressCreation(busAdd);
         });
 
-        it('Should be able to create a new category hierarchy', function(done) {
+        xit('Should be able to create a new category hierarchy', function(done) {
             // Go to Admin page
             browser.click('.dropdown-toggle.has-stack');
             browser.click('[ui-sref=admin]');
@@ -431,7 +455,7 @@ fdescribe('Integration tests', function () {
             browser.click('.col-md-3 > ui-view:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a:nth-child(1)');
         });
 
-        it('Cannot create an offering without a catalog nor product Spec', function(done) {
+       xit('Cannot create an offering without a catalog nor product Spec', function(done) {
             browser.url(proxy_location);
 
             // My stock
@@ -452,7 +476,7 @@ fdescribe('Integration tests', function () {
 
         });
 
-        it('Should be able to create a new catalog.', function(done) {
+        xit('Should be able to create a new catalog.', function(done) {
             // My Stock
             // browser.debug()
             browser.waitForExist('.bg-view3');
@@ -496,7 +520,7 @@ fdescribe('Integration tests', function () {
             //     browser.navigate().to("http://localhost:8004/#/offering")
         });
 
-        it('Cannot create an offering without a product Spec', function(done) {
+        xit('Cannot create an offering without a product Spec', function(done) {
             // This test should fail
             // My stock
             browser.waitForExist('.bg-view3');
@@ -515,7 +539,7 @@ fdescribe('Integration tests', function () {
         });
 
 
-        it('Create a new product Specification', function(done) {
+        xit('Create a new product Specification', function(done) {
             var product = {name: 'testProduct',
                            version: '1.0',
                            brand: 'Bimbo',
