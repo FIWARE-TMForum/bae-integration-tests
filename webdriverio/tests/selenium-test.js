@@ -105,9 +105,6 @@ describe('Integration tests', function () {
         userNormal = {id: 'test1@test1.com',
                       pass: 'test1'};
 
-        userProvider = {id: 'idm',
-                        pass: 'idm'};
-
         function waitUntilTitle(title, done) {
             browser.waitUntil(function() {
                 return browser.getTitle()  === title;
@@ -138,15 +135,29 @@ describe('Integration tests', function () {
             });
         }
 
-        function checkValues(form) {
-            Object.keys(form).forEach( x => {
-		if (form[x].kbd) {
-                    expect($('[name=' + x + ']').getValue()).toBe(form[x].val);
-                } else {
-                    expect($('[value=' + form[x].val + ']').isSelected()).toBe(true);
+        function checkForm(form) {
+            Object.keys(form).forEach( fieldName => {
+		if (form[fieldName].kbd) {
+                    expect($('[name=' + fieldName + ']').getValue()).toBe(form[fieldName].val);
+		} else {
+                    expect($('[value=' + form[fieldName].val + ']').isSelected()).toBe(true);
                 }
-            });
+	    });
         }
+
+	function checkFormModalContent(form) {
+	    Object.keys(form).forEach( fieldName => {
+		if (form[fieldName].kbd){
+		    expect($$('.modal-content input').filter(
+			elem => elem.getAttribute('name') === fieldName && elem.isVisible()
+		    )[0].getValue()).toBe(form[fieldName].val);
+		} else {
+		    expect($$('.modal-content select').filter(
+			elem => elem.getValue() === form[fieldName].val
+		    )[0] === undefined).toBe(false);
+		}
+	    });
+	}
 
 
         function secureSetValue(selector, value) {
@@ -244,20 +255,17 @@ describe('Integration tests', function () {
         };
 
         function shippingAddressCreation(shipAdd){
-            var keyboardProperties = ['emailAddress', 'street', 'postcode', 'city', 'stateOrProvince', 'type', 'number'];
-            var clickableProperties = ['country'];
 
             browser.waitForExist('[name=emailAddress]');
             browser.waitForEnabled('[name=emailAddress]');
-            if (!shipAdd || !properties.every(x => x in shipAdd)){
-                expect(browser.isExisting('[class="btn btn-warning"][disabled="disabled"]')).toBe(true);
-            } else {
-                keyboardProperties.forEach(x => $('[name=' + x + ']').setValue(shipAdd[x]));
-                clickableProperties.forEach(x => $('[value=' + shipAdd[x] + ']')).click();
-                expect(browser.isEnabled('.btn-warning')).toBe(true);
-                $('.btn-warning').click();
-
-            }
+	    // browser.debug();
+	    processForm(shipAdd);
+	    browser.waitForEnabled('.btn-warning'); // wait for "created"
+            browser.click('.btn-warning'); // create
+	    browser.waitForEnabled('.btn-sm');
+	    browser.click('.btn-sm'); // click edit
+	    browser.debug();
+	    checkFormModalContent(shipAdd);
         };
 
         function businessAddressCreation(busAdd) {
@@ -295,8 +303,7 @@ describe('Integration tests', function () {
 	    // browser.debug();
             browser.click('.dropdown-toggle.has-stack'); // click user button
             browser.click('[ui-sref=settings]'); // click settings
-	    browser.debug();
-	    checkValues(profileInfo);
+	    checkForm(profileInfo);
         }
 
         /*
@@ -311,6 +318,14 @@ describe('Integration tests', function () {
 
         // Check test-cases.org file to see a detailed explanation
         it('Test Case 1: Product creation and launch', function (done) {
+	    // ----------------- LOGIN ---------------------
+	    var userProvider = {id: 'idm',
+				pass: 'idm'};
+
+	    checkLogin(userProvider, 'idm', done);
+
+	    // ------------- UPDATE PROFILE ------------
+	    // TODO: fix JSON format, two categories: kbd y clickable
             var profileInfo = {
                 firstName: { val: 'testName', kbd: true },
                 lastName: { val: 'testSurName', kbd: true },
@@ -323,18 +338,30 @@ describe('Integration tests', function () {
                 placeOfBirth: { val: 'Albacete', kbd: true }
             };
 
-            // console.log("---------- TC 1 ------------");
-            // browser.debug();
-            // console.log("Checking login...");
-            checkLogin(userProvider, 'idm', done);
 	    browser.waitForExist(".dropdown-toggle.has-stack"); // wait for page to load
             browser.click('.dropdown-toggle.has-stack'); // click user button
             browser.click('[ui-sref=settings]'); // click settings
             profileUpdate(profileInfo);
 
-	    browser.debug();
 
-	    
+	    // ------------ SHIPPING ADDRESS -----------
+
+	    var shipAdd = {emailAddress: { val: 'testEmail@email.com', kbd: true },
+                           street: { val: 'fighter', kbd: true },
+                           postcode: {val: '1200000', kbd: true },
+                           city: { val: 'Tokyo', kbd: true },
+                           stateOrProvince: {val: 'Tokyo', kbd: true },
+                           type: { val: 'warehouse', kbd: true },
+                           number: { val: '666666666', kbd: true },
+                           country: { val: 'ES', kbd: false }
+			  };
+
+	    browser.click('[ui-sref="settings.contact"]'); // click "contact mediums"
+	    shippingAddressCreation(shipAdd); // TODO: go back to check form
+
+	    // ----------- BUSINESS ADDRESSES ------------
+	    // browser.debug();
+	    // browser.click('[ui-sref="settings.contact.business]'); // click "business addresses"
         });
 
         xit('Should be able to update his/her info', function(done) {
