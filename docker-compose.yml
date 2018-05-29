@@ -27,7 +27,7 @@ services:
         image: mysql:5.7.16
         restart: always
         ports:
-            - "127.0.0.1:3333:3306"
+            - 127.0.0.1:3333:3306
         # volumes:
         #     - /var/lib/mysql
         networks:
@@ -56,6 +56,9 @@ services:
         environment:
             - MYSQL_ROOT_PASSWORD=my-secret-pw
             - MYSQL_HOST=mysql
+        volumes:
+            - ./asadminpw:/asadminpw
+        entrypoint: /asadminpw/apis-remote-server-entrypoint.sh
 
     proxy:
       # image: conwetlab/biz-ecosystem-logic-proxy:develop
@@ -149,6 +152,7 @@ services:
             - ./webdriverio:/app
             # in order to make index cleaning easy, put the index volume from login-proxy here
             - ./../proxy-indexes:/proxy-indexes
+            - ./asadminpw:/asadminpw
     hub:
         image: selenium/hub
         ports:
