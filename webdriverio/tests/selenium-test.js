@@ -162,10 +162,20 @@ describe('Integration tests', function () {
 	    });
         }
 
+	function clickInTr(clickable) {
+	    // browser.debug();
+	    // browser.waitForEnabled($('tbody').elements('tr').value)
+	    var candidates = $('tbody').elements('tr').value; // every tr in the page
+	    candidates.forEach((trs, index) => {
+		if(trs.elements('td').value[0].getText() === clickable) // we are clicking by name so index 0
+		    candidates[index].elements('td').value[0].click();
+	    });
+	}
+	
 	function checkFormModalContent(form) {
 	    // browser.debug();
 	    Object.keys(form).every( fieldName => {
-		if (form[fieldName].kbd && fieldName !== 'number'){ // remove this when #10 issue is fixed
+		if (form[fieldName].kbd && fieldName !== 'number'){ // remove this when #22 issue is fixed
 		    expect($$('.modal-content input').some(
 			elem => elem.getAttribute('name') === fieldName && elem.isVisible()
 		    )).toBe(true);
@@ -272,7 +282,7 @@ describe('Integration tests', function () {
             browser.click('btn btn-warning');
         };
 
-        function shippingAddressCreation(shipAdd){
+        function shippingAddressCreation(shipAdd) {
 
 	    // browser.debug();
 	    // browser.pause(5000); // whatever
@@ -329,6 +339,24 @@ describe('Integration tests', function () {
             browser.click('[ui-sref=settings]'); // click settings
 	    checkForm(profileInfo);
         }
+
+	function categoryCreation(category, child) {
+	    // browser.debug();
+	    browser.waitForExist('[name=name]');
+	    processForm(category);
+	    if (child.child.val){
+		browser.click('.fa.fa-2x'); // click "choose a parent category"
+		browser.pause(160);
+		clickInTr(child.child.parent);
+	    }
+	    $('.form-group.text-right').$('.btn').click(); // click "next"
+	    browser.waitForExist('[name=name]');
+	    checkForm(category);
+	    // browser.debug();
+	    browser.click('[ng-click="createVM.create()"]'); // click "create"
+	    browser.waitForVisible('.alert-group'); // wait for creation alert to pop up
+	    browser.waitForVisible('.alert-group', 9000, true); // wait for creation alert not visible
+	}
 
         /*
           As far as i know, these test must be passed in this order as they emulate user possible actions.
@@ -410,6 +438,28 @@ describe('Integration tests', function () {
 	    	businessAddressCreation(busAdd, index);
 	    	// browser.debug();
 	    });
+	    // browser.debug();
+
+	    // ------------------- CATEGORY CREATION -----------------
+	    browser.click('.dropdown-toggle.has-stack'); // click user button
+	    // browser.click('a.btn.btn-default'); // go to main screen
+	    browser.click('[ui-sref=admin]'); // go to category creation
+	    browser.click('[ui-sref="admin.productCategory.create"]'); // click "create"
+
+	    var parentCat = { name: { val: "parentCat", kbd: true},
+			      description: { val: "This category is the son of grampaCat", kbd: true}
+			    };
+	    var childCat = { name: { val: "childCat", kbd: true},
+			     description: { val: "This category is the little son of parentCat", kbd: true}
+			   };
+
+	    categoryCreation(parentCat, {child: { val: false }});
+	    browser.click('[ui-sref="admin.productCategory"]'); // go to list
+	    browser.click('[ui-sref="admin.productCategory.create"]'); // click "create"
+
+	    categoryCreation(childCat, {child: { val: true, parent: "parentCat" }});
+	    browser.click('[ui-sref="admin.productCategory"]'); // go to list
+	    browser.click('[ui-sref="admin.productCategory.create"]'); // click "create"
         });
 
         xit('Should be able to update his/her info', function(done) {
@@ -525,7 +575,7 @@ describe('Integration tests', function () {
             var category = browser.getText('strong.ng-binding');
             expect(category).toBe('testCategory1');
 
-            browser.debug();
+            // browser.debug();
 
             browser.click('.col-md-3 > ui-view:nth-child(1) > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) > a:nth-child(1)');
         });
