@@ -187,7 +187,13 @@ describe('Integration tests', function () {
 	    });
 	}
 
-
+	function updateStatus(status) {
+	    browser.click('.status-' + status);
+	    browser.click('[ng-click="updateVM.update()"]'); // click "update"
+	    browser.waitForVisible('.alert-group'); // wait for creation alert to pop up
+	    browser.waitForVisible('.alert-group', 9000, true); // wait for creation alert not visible
+	}
+	
         function secureSetValue(selector, value) {
             value ? browser.setValue(selector, value) : browser.setValue(selector, '');
         };
@@ -356,6 +362,18 @@ describe('Integration tests', function () {
 	    browser.click('[ng-click="createVM.create()"]'); // click "create"
 	    browser.waitForVisible('.alert-group'); // wait for creation alert to pop up
 	    browser.waitForVisible('.alert-group', 9000, true); // wait for creation alert not visible
+
+	    // browser.debug();
+	}
+
+	function catalogCreation(catalog) {
+	    browser.waitForExist('[name=name]');
+	    processForm(catalog);
+	    $('.form-group.text-right').$('.btn').click(); // click "next"
+	    checkForm(catalog);
+	    browser.click('[ng-click="createVM.create()"]'); // click "create"
+	    browser.waitForVisible('.alert-group'); // wait for creation alert to pop up
+	    browser.waitForVisible('.alert-group', 9000, true); // wait for creation alert not visible
 	}
 
         /*
@@ -458,8 +476,40 @@ describe('Integration tests', function () {
 	    browser.click('[ui-sref="admin.productCategory.create"]'); // click "create"
 
 	    categoryCreation(childCat, {child: { val: true, parent: "parentCat" }});
-	    browser.click('[ui-sref="admin.productCategory"]'); // go to list
-	    browser.click('[ui-sref="admin.productCategory.create"]'); // click "create"
+	    // browser.click('[ui-sref="admin.productCategory"]'); // go to list
+	    // browser.click('[ui-sref="admin.productCategory.create"]'); // click "create"
+
+	    // browser.debug();
+
+	    browser.click('a.btn.btn-default'); // go to homepage
+	    browser.waitForEnabled('.bg-view3'); // wait for "My Stock" and click
+	    browser.click('.bg-view3');
+	    browser.waitForEnabled('.btn.btn-success'); // wait for "New" and click
+            browser.click('.btn.btn-success');
+
+	    // ---------------------- CATALOG CREATION --------------------------
+	    var catalog1 = { name: { val: "Product Catalog 1" , kbd: true},
+			     description: { val: "There's not much to say about catalogs anyway", kbd: true}
+			   };
+
+	    var catalog2 = { name: { val: "Product Catalog 2" , kbd: true},
+			     description: { val: "This is about to be OBSOLETE", kbd: true}
+			   };
+	    // browser.debug();
+	    catalogCreation(catalog1);
+	    updateStatus("launched");
+
+	    browser.waitForEnabled('.bg-view3'); // wait for "My Stock" and click
+	    browser.click('.bg-view3');
+	    browser.waitForEnabled('.btn.btn-success'); // wait for "New" and click
+            browser.click('.btn.btn-success');
+
+	    // browser.debug();
+	    catalogCreation(catalog2);
+	    updateStatus("launched");
+	    updateStatus("retired");
+	    updateStatus("obsolete");
+	    
         });
 
         xit('Should be able to update his/her info', function(done) {
@@ -592,7 +642,7 @@ describe('Integration tests', function () {
 
             //browser.debug();
             // click on New button
-            browser.waitForEnabled('.btn.btn-success');
+           browser.waitForEnabled('.btn.btn-success');
             browser.click('.btn.btn-success');
             // div.alert:nth-child(1) > span:nth-child(1)
             browser.waitForExist('div.alert:nth-child(1) > span:nth-child(1)');
