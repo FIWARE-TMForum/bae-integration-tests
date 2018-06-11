@@ -145,9 +145,9 @@ describe('Integration tests', function () {
         function processForm(form) {
             Object.keys(form).forEach( x => {
                 if (form[x].kbd) {
-                    $('[name=' + x + ']').setValue(form[x].val);
+                    $$('[name=' + x + ']').filter(x => x.isVisible())[0].setValue(form[x].val);
                 } else {
-                    $('[value=' + form[x].val + ']').click();
+                    $$('[value=' + form[x].val + ']').filter(x => x.isVisible())[0].click();
                 }
             });
         }
@@ -208,84 +208,6 @@ describe('Integration tests', function () {
 
         function clickElementByCSS(selector, attribute, compareValue) {
             getElementByCSS(selector, attribute, compareValue).forEach(x => x.click());
-        };
-
-        function createProductSpec(browser, product, expectedProduct, done) {
-            var nextButton = 'btn btn-default z-depth-1';
-            // var stringSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[1]';
-            // var numberSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[2]';
-            // var numberRangeSelector = '/html/body/div[4]/div/div[3]/ui-view/ui-view/ui-view/div/div[2]/div/div/div[2]/div[2]/div[4]/div/ng-include/div[2]/div/form[1]/div[1]/div[2]/div/select/option[3]';
-            browser.waitForExist('.bg-view3');
-            browser.click('.bg-view3');
-            browser.waitForExist('li.active:nth-child(2)');
-            browser.click('li.active:nth-child(2)');
-
-            // 1
-            browser.waitForExist('.btn.btn-success');
-            browser.click('.btn.btn-success');
-            browser.waitForEnabled('[name=name]');
-            secureSetValue('[name=name]', product.name);
-            secureSetValue('[name=version]', product.version);
-            secureSetValue('[name=brand]', product.brand);
-            secureSetValue('[name=productNumber]', product.productNumber);
-            secureSetValue('[name=description]', product.description);
-            browser.click('form.ng-valid-pattern > div:nth-child(4) > a:nth-child(1)');
-
-            // 2
-            browser.waitForEnabled(nextButton);
-            browser.click(nextButton);
-
-            // 3
-            browser.waitForEnabled(nextButton);
-            browser.click(nextButton);
-
-            // 4
-            browser.waitForExist('.text-left > a:nth-child(1)');
-            if(product.characteristics){
-                browser.click('.text-left > a:nth-child(1)');
-                product.characteristics.forEach(characteristic => {
-                    browser.waitForEnabled('[name=name]');
-                    secureSetValue('[name=name]', characteristic.name);
-                    secureSetValue('[name=description]', characteristic.description);
-                    // Now i should send the value to the proper field, but first i need to select the correct selector
-                    if (characteristic.value.type === 'number'){
-
-                        browser.click('div.row:nth-child(4) > div:nth-child(1) > ng-include:nth-child(2) > div:nth-child(2) > div:nth-child(1) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(2)');
-                        secureSetValue('[name=unitOfMeasure]', characteristic.value.unit);
-                        secureSetValue('[name=value]', characteristic.value.val);
-                    }else if(characteristic.value.type === 'numberRange'){
-                        browser.click('div.row:nth-child(4) > div:nth-child(1) > ng-include:nth-child(2) > div:nth-child(2) > div:nth-child(1) > form:nth-child(1) > div:nth-child(1) > div:nth-child(2) > div:nth-child(1) > select:nth-child(2) > option:nth-child(3)');
-                        browser.findElement(By.css(numberRangeSelector)).click();
-                        secureSetValue('[name=unitOfMeasure]', characteristic.value.unit);
-                        secureSetValue('[name=valueTo]', characteristic.value.valTo);
-                        secureSetValue('[name=valueFrom]', characteristic.value.valFrom);
-                    }else{
-                        secureSetValue('[name=value]', characteristic.value.val);
-                    }
-                    browser.click('.col-sm-2 > a:nth-child(1)');
-                });
-                browser.findElement(By.className('btn btn-warning z-depth-1 ng-scope')).click();
-            }
-            browser.click('div.row:nth-child(4) > div:nth-child(1) > ng-include:nth-child(2) > div:nth-child(4) > a:nth-child(1)');
-
-            // 5
-            browser.waitForExist('[name=picture]');
-            secureSetValue('[name=picture]', product.picture);
-            browser.click(nextButton);
-
-            // 6
-            browser.waitForEnabled(nextButton);
-            browser.click(nextButton);
-
-            // 7
-            browser.waitForEnabled(nextButton);
-            secureSetValue('[name=title]', product.title);
-            secureSetValue('[name=text]', product.text);
-            browser.click(nextButton);
-
-            // 8
-            browser.waitForEnabled('btn btn-warning');
-            browser.click('btn btn-warning');
         };
 
         function shippingAddressCreation(shipAdd) {
@@ -376,6 +298,68 @@ describe('Integration tests', function () {
 	    browser.waitForVisible('.alert-group', 9000, true); // wait for creation alert not visible
 	}
 
+	function productSpecCreation(prodSpec) {
+	    browser.debug();
+	    // step 1: general
+	    processForm(prodSpec.general);
+	    $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
+	    // step 2: bundle [PENDING]
+	    // browser.debug();
+	    if(Object.keys(prodSpec.bundle).length !== 0) {
+		// do things with bundle
+	    }
+	    $('[ng-disabled="createVM.data.isBundle && !createVM.bundleControl.valid"]').click(); // click next
+
+	    // step 3: digitalAssets [PENDING]
+	    // browser.debug();
+	    if(Object.keys(prodSpec.digitalAssets).length !== 0) {
+		// do things with digitalAssets
+	    }
+	    $('[ng-disabled="createVM.isDigital && !createVM.assetCtl.isValidAsset()"]').click(); // click next
+
+	    // browser.debug();
+	    // step 4: characteristics
+	    if(Object.keys(prodSpec.characteristics).length !== 0) {
+		prodSpec.characteristics.forEach(char => {
+		    browser.click('[ng-click="createVM.characteristicEnabled = true"]'); // click new characteristic
+		    // browser.debug();
+		    browser.pause(500);
+		    processForm(char.generalForm);
+		    char.values.forEach( value => {
+			browser.waitForEnabled('[name=value]');
+			processForm(value);
+			browser.click('[ng-disabled="!step.characteristicValueForm.$valid"]'); // click "+"
+		    });
+		    // this ugly click is for characteristic creation
+		    browser.click('[ng-click="createVM.createCharacteristic() && createForm.resetForm(step.characteristicForm)"]'); 
+		});
+	    }
+	    // browser.debug();
+	    $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
+	    // step 5: attachments
+	    // browser.debug();
+	    if(Object.keys(prodSpec.attachments).length !== 0) {
+		processForm(prodSpec.attachments);
+	    }
+	    $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
+	    // step 6: relationships [PENDING]
+	    // browser.debug();
+	    if(Object.keys(prodSpec.relationships).length !== 0) {
+		// do things with relationships
+	    }
+	    $$('[ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])"]').filter(x => x.isVisible())[0].click(); // next
+	    // step 7: terms and conditions
+	    // browser.debug();
+	    if(Object.keys(prodSpec.terms).length !== 0) {
+		processForm(prodSpec.terms);
+	    }
+	    $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // next
+	    // step 8: finish
+	    // [PENDING] check form 
+	    // browser.debug();
+	    browser.click('[ng-click="createVM.create()"]'); // finish creation
+        }
+
         /*
           As far as i know, these test must be passed in this order as they emulate user possible actions.
         */
@@ -432,12 +416,7 @@ describe('Integration tests', function () {
 	    
 	    // ----------- BUSINESS ADDRESSES ------------
 
-	    // browser.debug();
-	    // $('[ui-sref="settings.contact.business"]').waitForVisible(); // CHECK THIS
-	    // $('[ui-sref="settings.contact.business"]').waitForEnabled(); // CHECK THIS
 	    $('[ui-sref="settings.contact.business"]').click(); // click "business addresses" 
-
-	    // browser.debug();	     
 	    
 	    var busAddresses = [{ mediumType: {val: 'Email', kbd: false},
 				  emailAddress: {val:'testEmail@email.com', kbd: true}},
@@ -454,9 +433,7 @@ describe('Integration tests', function () {
 
 	    busAddresses.forEach((busAdd, index) => {
 	    	businessAddressCreation(busAdd, index);
-	    	// browser.debug();
 	    });
-	    // browser.debug();
 
 	    // ------------------- CATEGORY CREATION -----------------
 	    browser.click('.dropdown-toggle.has-stack'); // click user button
@@ -476,10 +453,6 @@ describe('Integration tests', function () {
 	    browser.click('[ui-sref="admin.productCategory.create"]'); // click "create"
 
 	    categoryCreation(childCat, {child: { val: true, parent: "parentCat" }});
-	    // browser.click('[ui-sref="admin.productCategory"]'); // go to list
-	    // browser.click('[ui-sref="admin.productCategory.create"]'); // click "create"
-
-	    // browser.debug();
 
 	    browser.click('a.btn.btn-default'); // go to homepage
 	    browser.waitForEnabled('.bg-view3'); // wait for "My Stock" and click
@@ -495,7 +468,7 @@ describe('Integration tests', function () {
 	    var catalog2 = { name: { val: "Product Catalog 2" , kbd: true},
 			     description: { val: "This is about to be OBSOLETE", kbd: true}
 			   };
-	    // browser.debug();
+
 	    catalogCreation(catalog1);
 	    updateStatus("launched");
 
@@ -504,11 +477,42 @@ describe('Integration tests', function () {
 	    browser.waitForEnabled('.btn.btn-success'); // wait for "New" and click
             browser.click('.btn.btn-success');
 
-	    // browser.debug();
 	    catalogCreation(catalog2);
 	    updateStatus("launched");
 	    updateStatus("retired");
 	    updateStatus("obsolete");
+
+	    browser.debug();
+	    browser.click('[ui-sref="stock.product"]'); // click "product spec"
+	    browser.waitForEnabled('.btn.btn-success'); // wait for "New" and click
+            browser.click('.btn.btn-success');
+
+	    // ---------------------- PRODUCT SPEC CREATION --------------------
+
+	    var productSpec1 = {
+		general: {name: {val: "prodSpec1", kbd: true},
+			  version: {val: "0.01", kbd: true},
+			  brand: {val: "FIWARE Lab", kbd: true},
+			  productNumber: {val: "1", kbd: true},
+			  description: {val: "Test Case 1 only product spec", kbd: true}},
+		bundle: {}, // bundle
+		digitalAssets: {}, // digital asset
+		characteristics: [{generalForm: { name: {val: "characteristic", kbd: true},
+						  valueType: {val: "number", kbd: false},
+						  description: {val: "does something, dunno what", kbd: true}},
+				   values: [{ value: {val: "9", kbd: true},
+					      unitOfMeasure: {val: "somethings", kbd: true}}]
+				  }], // characteristics
+		attachments: {pictureProvide: {val: "url", kbd: false},
+			      picture: {val: "https://www.fiware.org//wp-content/uploads/2017/12/logo1.gif", kbd: true}}, // check upload
+		relationships: {},
+		terms: {title: {val: "EULA", kbd: true},
+			text: {val: "do you agree?", kbd: true}
+		       }
+	    };
+
+	    productSpecCreation(productSpec1);
+	    browser.debug();
 	    
         });
 
