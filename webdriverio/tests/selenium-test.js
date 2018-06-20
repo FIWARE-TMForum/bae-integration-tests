@@ -118,9 +118,6 @@ describe('Integration tests', function () {
             // Depopulate DDBB
         });
 
-        userNormal = {id: 'test1@test1.com',
-                      pass: 'test1'};
-
         function waitUntilTitle(title, done) {
             browser.waitUntil(function() {
                 return browser.getTitle()  === title;
@@ -171,6 +168,10 @@ describe('Integration tests', function () {
 		    candidates[index].elements('td').value[0].click();
 	    });
 	}
+
+	function clickInTh(clickable) {
+	    $('tbody').elements('th').value.filter( x => x.getText() === clickable)[0].click();
+	}
 	
 	function checkFormModalContent(form) {
 	    // browser.debug();
@@ -190,6 +191,11 @@ describe('Integration tests', function () {
 	function updateStatus(status) {
 	    browser.click('.status-' + status);
 	    browser.click('[ng-click="updateVM.update()"]'); // click "update"
+	    browser.waitForVisible('.alert-group'); // wait for creation alert to pop up
+	    browser.waitForVisible('.alert-group', 9000, true); // wait for creation alert not visible
+	}
+
+	function waitForPopUp() {
 	    browser.waitForVisible('.alert-group'); // wait for creation alert to pop up
 	    browser.waitForVisible('.alert-group', 9000, true); // wait for creation alert not visible
 	}
@@ -299,7 +305,7 @@ describe('Integration tests', function () {
 	}
 
 	function productSpecCreation(prodSpec) {
-	    browser.debug();
+	    // browser.debug();
 	    // step 1: general
 	    processForm(prodSpec.general);
 	    $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
@@ -360,6 +366,74 @@ describe('Integration tests', function () {
 	    browser.click('[ng-click="createVM.create()"]'); // finish creation
         }
 
+	function productOfferingCreation(prodOff) {
+	    //browser.debug();
+	    // step 1: general
+	    browser.pause(500);
+	    processForm(prodOff.general);
+	    prodOff.places.forEach( x => {
+		$('[name=place]').setValue(x);
+		$('[ng-click="createVM.createPlace()"]').click();
+	    });
+	    $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
+	    // step 2: bundle
+	    //browser.debug();
+	    if(Object.keys(prodOff.bundle).length !== 0) {
+		// do things with bundle
+	    }
+	    $('[ng-disabled="createVM.data.isBundle && !createVM.bundleControl.valid"]').click(); // click next
+	    // step 3: product Spec selection
+	    //browser.debug();
+	    $$('[placeholder="Search..."]').filter(x => x.isVisible)[0].setValue(prodOff.productSpec);
+	    browser.click('[id=formSearch]'); // search spec
+	    clickInTh(prodOff.productSpec);
+	    //browser.debug();
+	    $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
+	    // step 4: catalogue
+	    //browser.debug();
+	    $$('[placeholder="Search..."]').filter(x => x.isVisible)[0].setValue(prodOff.catalogue);
+	    browser.click('[id=formSearch]'); // search spec
+	    clickInTr(prodOff.catalogue); // click spec
+	    browser.pause(500);
+	    //browser.debug();
+	    $$('[class="ng-binding"]').filter(x => x.getText() === prodOff.catalogue)[0].click();
+	    $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
+	    // step 5: categories
+	    //browser.debug();
+	    prodOff.categories.forEach(x => clickInTr(x)); // click categories
+	    browser.pause(500);
+	    $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
+	    // step 6: price plans
+	    // browser.debug();
+	    if(Object.keys(prodOff.pricePlans) !== 0) {
+		prodOff.pricePlans.forEach( pp => {
+		    browser.click('[ng-click="createVM.pricePlanEnabled = true"]'); // new price plan
+		    browser.pause(500);
+		    // browser.debug();
+		    $$('.dropdown-toggle.z-depth-0').filter(x => x.isVisible())[0].click(); // click paymentType dropdown
+		    $$('[class="item-text ng-binding"]').filter(x => x.getText() === pp.paymentType.val)[0].click(); // click paymentType
+		    delete pp.paymentType;
+		    $$('.dropdown-toggle.z-depth-0').filter(x => x.isVisible())[1].click(); // click price currency
+		    $$('[class="item-text ng-binding"]').filter(x => x.getText() === pp.currency.val)[0].click(); // click currency
+		    delete pp.currency;
+		    $$('.dropdown-toggle.z-depth-0').filter(x => x.isVisible())[2].click(); // click priceAlteration
+		    $$('[class="item-text ng-binding"]').filter(x => x.getText() === pp.priceAlteration.val)[0].click();
+		    delete pp.priceAlteration;
+		    processForm(pp);
+		    browser.click('[ng-click="createVM.createPricePlan()"]');
+		});
+	    }
+	    $$('[ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])"]').filter(x => x.isVisible())[0].click();
+	    // step 7: RS Model
+	    // browser.debug();
+	    $$('td').filter(x => x.getText() === prodOff.RSModel)[0].click();
+	    $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
+	    // step 8: finish
+	    // [PENDING] check form
+	    // browser.debug();
+	    browser.click('[ng-click="createVM.create()"]');
+	}
+
         /*
           As far as i know, these test must be passed in this order as they emulate user possible actions.
         */
@@ -373,8 +447,8 @@ describe('Integration tests', function () {
         // Check test-cases.org file to see a detailed explanation
         it('Test Case 1: Product creation and launch', function (done) {
 	    // ----------------- LOGIN ---------------------
-	    var userProvider = {id: 'idm',
-				pass: 'idm'};
+	    var userProvider = {id: 'admin@test.com',
+				pass: '1234'};
 	    // browser.debug();
 	    checkLogin(userProvider, 'idm', done);
 
@@ -482,7 +556,8 @@ describe('Integration tests', function () {
 	    updateStatus("retired");
 	    updateStatus("obsolete");
 
-	    browser.debug();
+	    // browser.debug();
+	    
 	    browser.click('[ui-sref="stock.product"]'); // click "product spec"
 	    browser.waitForEnabled('.btn.btn-success'); // wait for "New" and click
             browser.click('.btn.btn-success');
@@ -490,29 +565,75 @@ describe('Integration tests', function () {
 	    // ---------------------- PRODUCT SPEC CREATION --------------------
 
 	    var productSpec1 = {
-		general: {name: {val: "prodSpec1", kbd: true},
-			  version: {val: "0.01", kbd: true},
-			  brand: {val: "FIWARE Lab", kbd: true},
-			  productNumber: {val: "1", kbd: true},
-			  description: {val: "Test Case 1 only product spec", kbd: true}},
+		general: { name: { val: "prodSpec1", kbd: true },
+			   version: { val: "0.01", kbd: true },
+			   brand: { val: "FIWARE Lab", kbd: true },
+			   productNumber: { val: "1", kbd: true },
+			   description: { val: "Test Case 1 only product spec", kbd: true }},
 		bundle: {}, // bundle
 		digitalAssets: {}, // digital asset
-		characteristics: [{generalForm: { name: {val: "characteristic", kbd: true},
-						  valueType: {val: "number", kbd: false},
-						  description: {val: "does something, dunno what", kbd: true}},
-				   values: [{ value: {val: "9", kbd: true},
-					      unitOfMeasure: {val: "somethings", kbd: true}}]
+		characteristics: [{ generalForm: { name: { val: "characteristic", kbd: true },
+						   valueType: { val: "number", kbd: false },
+						   description: {val: "does something, dunno what", kbd: true }},
+				    values: [{ value: { val: "9", kbd: true },
+					       unitOfMeasure: { val: "somethings", kbd: true }}]
 				  }], // characteristics
-		attachments: {pictureProvide: {val: "url", kbd: false},
-			      picture: {val: "https://www.fiware.org//wp-content/uploads/2017/12/logo1.gif", kbd: true}}, // check upload
+		attachments: { pictureProvide: { val: "url", kbd: false },
+			       picture: { val: "https://www.fiware.org//wp-content/uploads/2017/12/logo1.gif", kbd: true }}, // check upload
 		relationships: {},
-		terms: {title: {val: "EULA", kbd: true},
-			text: {val: "do you agree?", kbd: true}
+		terms: { title: { val: "EULA", kbd: true },
+			 text: { val: "do you agree?", kbd: true }
 		       }
 	    };
 
 	    productSpecCreation(productSpec1);
+	    waitForPopUp();
+	    //browser.debug();
+	    updateStatus("launched");
+	    //browser.debug();
+
+	    browser.click('[ui-sref="stock.offering"]'); // click offering
+	    browser.waitForEnabled('.btn.btn-success'); // wait for "New" and click
+            browser.click('.btn.btn-success');
+
+	    // ---------------------- PRODUCT OFFERING CREATION ----------------
+	    var productOffering1 = {
+		general: { name: { val: "prodOff1", kbd: true },
+			   version: { val: "0.5", kbd: true },
+			   description: { val: "Test Case 1 only product offering", kbd: true },
+			 },
+		places: ["parts unknown"], // this is inside general but outside processForm
+		bundle: {}, // bundle
+		productSpec: "prodSpec1", 
+		catalogue: "Product Catalog 1",
+		categories: ["parentCat"],
+		pricePlans: [{ name: { val: "Standard payment", kbd: true },
+			       paymentType: { val: "ONE TIME", kbd: false },
+			       taxIncludedAmount: { val: "3", kbd: true },
+			       description: { val: "Standard product payment", kbd: true },
+			       priceAlteration: { val: "None", kbd: false},
+			       currency: { val: "(BRL) Brazil Real", kbd: false}
+			     }],
+		RSModel: "defaultRevenue"
+	    };
+
+	    productOfferingCreation(productOffering1);
+	    waitForPopUp();
+	    updateStatus("launched");
 	    browser.debug();
+
+	    browser.reload(); // close session
+	    browser.url(proxy_location);
+
+	    // -------------- Buying user connection -------------
+	    
+	    var userNormal = {id: 'test1',
+			      pass: 'test1'};
+	    
+	    checkLogin(userNormal, 'test1', done);
+
+	    browser.debug();
+	    
 	    
         });
 
