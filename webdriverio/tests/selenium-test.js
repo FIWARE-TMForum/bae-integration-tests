@@ -45,10 +45,6 @@ describe('Integration tests', function () {
             console.log('connected as id ' + connection.threadId);
         });
         cleanIndexes();
-        // cleanDB().then(function(){
-        //     console.log("out of promise");
-        //     done();
-        //});
         // DDBB and indexes must be cleaned from data, the only thing it should have is the schema.
     });
 
@@ -84,12 +80,25 @@ describe('Integration tests', function () {
             });
         });
     }
+    
+    function restartMongo() {
+	var mongocmd = 'mongorestore --host mongo.docker --drop --dir=/app/tests/mongodump/tc1';
+
+	return new Promise(function(resolve, reject) {
+            exec(mongocmd, function(error, stdout, stderr) {
+                if(error)
+                    reject("cannot exec command: " + error);
+                else
+                    resolve("Command executed!: " + stdout);
+            });
+        });
+    }
 
     function cleanIndexes() {
         indexes.map(x => deleteFolder(indexPath + x));
     };
 
-    function cleanDB() {
+    function cleanSQLs() {
         console.log("Loading SQL dump and creation...");
         return new Promise(function(resolve, reject){
             connection.query(fs.readFileSync('/app/tests/initialstate_dbs.sql').toString(), function(error, results, fields) {
@@ -106,10 +115,12 @@ describe('Integration tests', function () {
     describe('User.', function () {
 
         beforeAll(function() {
-            cleanDB().then((msg) => {
+            cleanSQLs().then((msg) => {
                 restartApis().then((msg) => {
-                    console.log(msg);
-                    browser.url(proxy_location);
+		    restartMongo().then((msg) => {
+			console.log(msg);
+			browser.url(proxy_location);
+		    });
                 });
             });
         });
