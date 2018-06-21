@@ -16,3 +16,5 @@ RUN apt-get update; \
     unzip glassfish-4.1.zip;
 
 ENV PATH /app/glassfish4/glassfish/bin:$PATH
+
+RUN apt-get install -y --fix-missing mongodb-clients mongodb-dev;
