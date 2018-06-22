@@ -459,7 +459,8 @@ describe('Integration tests', function () {
                                 pass: '1234'};
             // browser.debug();
             checkLogin(userProvider, 'admin', done);
-
+	    browser.pause(15000); // really big pause 'cause glassfish is poopy and I cannot fully ensure all APIs are up by this time
+	    
             // ------------- UPDATE PROFILE ------------
             // TODO: fix JSON format, two categories: kbd y clickable
             var profileInfo = {
@@ -644,6 +645,7 @@ describe('Integration tests', function () {
 
             browser.debug();
             browser.waitForExist(".dropdown-toggle.has-stack");
+	    browser.pause(500);
             browser.click('[ng-click="user.order(offering)"]');
             browser.waitForVisible('[class="modal-content"]');
             $$('[ng-repeat="tab in createVM.tabs"]')[1].click(); // click terms and conditions
