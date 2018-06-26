@@ -232,21 +232,19 @@ describe('Integration tests', function () {
         };
 
         function shippingAddressCreation(shipAdd) {
-
-            // browser.debug();
-            // browser.pause(5000); // whatever
             browser.waitForExist('.fa.fa-spinner', 9000, true);
-            // browser.debug();
             browser.waitForExist('[name=emailAddress]', 9000);
             browser.waitForEnabled('[name=emailAddress]', 9000);
-            // browser.debug();
+
             processForm(shipAdd);
+
             browser.waitForEnabled('.btn-warning'); // wait for "created"
             browser.click('.btn-warning'); // create
             browser.waitForEnabled('.btn-sm');
             browser.click('.btn-sm'); // click edit
-            // browser.debug();
+
             checkFormModalContent(shipAdd);
+
             browser.click('/html/body/div[10]/div/div/div[3]/a[2]'); // click "cancel" (maybe a refactor could be handy)
             browser.waitUntil(function() {
                 return $('[ng-controller="CustomerUpdateCtrl as updateVM"]').isVisible() === false;
@@ -257,39 +255,41 @@ describe('Integration tests', function () {
         function businessAddressCreation(busAdd, count) {
             browser.waitForExist('[name=mediumType]');
             browser.waitForEnabled('[name=mediumType]');
-            // browser.debug();
 
             processForm(busAdd);
 
-            // browser.debug();
             browser.waitForEnabled('a.btn.btn-warning');
             browser.click('a.btn.btn-warning');
             browser.waitForExist('.btn-sm.btn-icon.btn-info');
             browser.waitForVisible('.alert-group'); // wait for creation alert to pop up
             browser.waitForVisible('.alert-group', 9000, true); // wait for creation alert not visible
             $$('.btn-sm.btn-icon.btn-info')[count].click(); // select edit button by index
+
             checkFormModalContent(busAdd);
+
             browser.click('/html/body/div[9]/div/div/div[3]/a[2]'); // click "cancel"
             browser.pause(fadeTime);
-            // browser.waitForExist('div.table-responsive:nth-child(3) > table:nth-child(1) > tbody:nth-child(2)');
-            // expect(browser.value('tr.ng-scope:nth-child(1) > th:nth-child(1)')).toBe(busAdd.medium);
         };
 
         function profileUpdate(profileInfo) {
             browser.waitForExist('[name=firstName]');
+
             processForm(profileInfo);
+
             browser.click('[ng-click="updateVM.update()"]'); // update
 	    waitForPopUp();
             // Check update
             browser.click('.dropdown-toggle.has-stack'); // click user button
             browser.click('[ui-sref=settings]'); // click settings
+
             checkForm(profileInfo);
         }
 
         function categoryCreation(category, child) {
-            // browser.debug();
             browser.waitForExist('[name=name]');
+
             processForm(category);
+
             if (child.child.val){
                 browser.click('.fa.fa-2x'); // click "choose a parent category"
                 browser.pause(160);
@@ -297,13 +297,12 @@ describe('Integration tests', function () {
             }
             $('.form-group.text-right').$('.btn').click(); // click "next"
             browser.waitForExist('[name=name]');
+
             checkForm(category);
-            // browser.debug();
+
             browser.click('[ng-click="createVM.create()"]'); // click "create"
             browser.waitForVisible('.alert-group'); // wait for creation alert to pop up
             browser.waitForVisible('.alert-group', 9000, true); // wait for creation alert not visible
-
-            // browser.debug();
         }
 
         function catalogCreation(catalog) {
@@ -317,30 +316,23 @@ describe('Integration tests', function () {
         }
 
         function productSpecCreation(prodSpec) {
-            // browser.debug();
             // step 1: general
             processForm(prodSpec.general);
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 2: bundle [PENDING]
-            // browser.debug(); 
             if(Object.keys(prodSpec.bundle).length !== 0) {
                 // do things with bundle
             }
             $('[ng-disabled="createVM.data.isBundle && !createVM.bundleControl.valid"]').click(); // click next
-
             // step 3: digitalAssets [PENDING]
-            // browser.debug();
             if(Object.keys(prodSpec.digitalAssets).length !== 0) {
                 // do things with digitalAssets
             }
             $('[ng-disabled="createVM.isDigital && !createVM.assetCtl.isValidAsset()"]').click(); // click next
-
-            // browser.debug();
             // step 4: characteristics
             if(Object.keys(prodSpec.characteristics).length !== 0) {
                 prodSpec.characteristics.forEach(char => {
                     browser.click('[ng-click="createVM.characteristicEnabled = true"]'); // click new characteristic
-                    // browser.debug();
                     browser.pause(500);
                     processForm(char.generalForm);
                     char.values.forEach( value => {
@@ -352,34 +344,28 @@ describe('Integration tests', function () {
                     browser.click('[ng-click="createVM.createCharacteristic() && createForm.resetForm(step.characteristicForm)"]');
                 });
             }
-            // browser.debug();
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 5: attachments
-            // browser.debug();
             if(Object.keys(prodSpec.attachments).length !== 0) {
                 processForm(prodSpec.attachments);
             }
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 6: relationships [PENDING]
-            // browser.debug();
             if(Object.keys(prodSpec.relationships).length !== 0) {
                 // do things with relationships
             }
             $$('[ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])"]').filter(x => x.isVisible())[0].click(); // next
             // step 7: terms and conditions
-            // browser.debug();
             if(Object.keys(prodSpec.terms).length !== 0) {
                 processForm(prodSpec.terms);
             }
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // next
             // step 8: finish
             // [PENDING] check form
-            // browser.debug();
             browser.click('[ng-click="createVM.create()"]'); // finish creation
         }
 
         function productOfferingCreation(prodOff) {
-            //browser.debug();
             // step 1: general
             browser.pause(500);
             processForm(prodOff.general);
@@ -389,39 +375,31 @@ describe('Integration tests', function () {
             });
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 2: bundle
-            //browser.debug();
             if(Object.keys(prodOff.bundle).length !== 0) {
                 // do things with bundle
             }
             $('[ng-disabled="createVM.data.isBundle && !createVM.bundleControl.valid"]').click(); // click next
             // step 3: product Spec selection
-            //browser.debug();
             $$('[placeholder="Search..."]').filter(x => x.isVisible)[0].setValue(prodOff.productSpec);
             browser.click('[id=formSearch]'); // search spec
             clickInTh(prodOff.productSpec);
-            //browser.debug();
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 4: catalogue
-            //browser.debug();
             $$('[placeholder="Search..."]').filter(x => x.isVisible)[0].setValue(prodOff.catalogue);
             browser.click('[id=formSearch]'); // search spec
             clickInTr(prodOff.catalogue); // click spec
             browser.pause(500);
-            //browser.debug();
             $$('[class="ng-binding"]').filter(x => x.getText() === prodOff.catalogue)[0].click();
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 5: categories
-            //browser.debug();
             prodOff.categories.forEach(x => clickInTr(x)); // click categories
             browser.pause(500);
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 6: price plans
-            // browser.debug();
             if(Object.keys(prodOff.pricePlans).length !== 0) {
                 prodOff.pricePlans.forEach( pp => {
                     browser.click('[ng-click="createVM.pricePlanEnabled = true"]'); // new price plan
                     browser.pause(500);
-                    // browser.debug();
                     $$('.dropdown-toggle.z-depth-0').filter(x => x.isVisible())[0].click(); // click paymentType dropdown
                     $$('[class="item-text ng-binding"]').filter(x => x.getText() === pp.paymentType.val)[0].click(); // click paymentType
                     delete pp.paymentType;
@@ -437,12 +415,10 @@ describe('Integration tests', function () {
             }
             $$('[ng-click="createForm.nextStep($index + 1, createVM.stepList[$index + 1])"]').filter(x => x.isVisible())[0].click();
             // step 7: RS Model
-            // browser.debug();
             $$('td').filter(x => x.getText() === prodOff.RSModel)[0].click();
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 8: finish
             // [PENDING] check form
-            // browser.debug();
             browser.click('[ng-click="createVM.create()"]');
         }
 
@@ -465,11 +441,11 @@ describe('Integration tests', function () {
         // expect(title).toBe('Biz Ecosystem');
 
         // Check test-cases.org file to see a detailed explanation
-        it('Test Case 1: Product creation and launch', function (done) {
+        it('Test Case 1: Product creation, launch and free adquisition', function (done) {
             // ----------------- LOGIN ---------------------
             var userProvider = {email: 'admin@test.com',
                                 pass: '1234'};
-            // browser.debug();
+
             checkLogin(userProvider, 'admin', done);
 	    browser.pause(15000); // really big pause 'cause glassfish is poopy and I cannot fully ensure all APIs are up by this time
 	    
@@ -487,7 +463,6 @@ describe('Integration tests', function () {
                 placeOfBirth: { val: 'Albacete', kbd: true }
             };
 
-            // browser.debug();
             browser.waitForExist(".dropdown-toggle.has-stack"); // wait for page to load
             browser.click('.dropdown-toggle.has-stack'); // click user button
             browser.click('[ui-sref=settings]'); // click settings
@@ -532,8 +507,8 @@ describe('Integration tests', function () {
             });
 
             // ------------------- CATEGORY CREATION -----------------
+
             browser.click('.dropdown-toggle.has-stack'); // click user button
-            // browser.click('a.btn.btn-default'); // go to main screen
             browser.waitForEnabled('[ui-sref=admin]');
             browser.click('[ui-sref=admin]'); // go to category creation
             browser.click('[ui-sref="admin.productCategory.create"]'); // click "create"
@@ -558,6 +533,7 @@ describe('Integration tests', function () {
             browser.click('[ui-sref="stock.catalogue.create"]');
 
             // ---------------------- CATALOG CREATION --------------------------
+
             var catalog1 = { name: { val: "Product Catalog 1" , kbd: true},
                              description: { val: "There's not much to say about catalogs anyway", kbd: true}
                            };
@@ -578,8 +554,6 @@ describe('Integration tests', function () {
             updateStatus("launched");
             updateStatus("retired");
             updateStatus("obsolete");
-
-            // browser.debug();
 
             browser.click('[ui-sref="stock.product"]'); // click "product spec"
             browser.waitForEnabled('[ui-sref="stock.product.create"]'); // wait for "New" and click
@@ -611,9 +585,7 @@ describe('Integration tests', function () {
 
             productSpecCreation(productSpec1);
             waitForPopUp();
-            //browser.debug();
             updateStatus("launched");
-            //browser.debug();
 
             browser.click('[ui-sref="stock.offering"]'); // click offering
 	    browser.waitForEnabled('[ui-sref="stock.offering.create"]'); // wait for "New" and click
@@ -644,7 +616,6 @@ describe('Integration tests', function () {
             productOfferingCreation(productOffering1);
             waitForPopUp();
             updateStatus("launched");
-            // browser.debug();
 
             browser.reload(); // close session
             browser.url(proxy_location);
@@ -655,8 +626,6 @@ describe('Integration tests', function () {
                               pass: 'test1'};
 
             checkLogin(userNormal, 'test1', done);
-
-            // browser.debug();
             browser.waitForExist(".dropdown-toggle.has-stack");
 	    browser.pause(500);
             browser.click('[ng-click="user.order(offering)"]');
@@ -701,15 +670,12 @@ describe('Integration tests', function () {
 		productOffering: productOffering1.general.name.val
             };
 
-	    // browser.debug();
 	    confirmCheckout(checkoutInfo);
 	    browser.waitForVisible('[class="alert alert-info text-center"]'); // wait for checkout procesing
 	    browser.click('[ui-sref="inventory.productOrder"]'); // click product orders
 	    browser.waitForVisible('[ng-repeat="productOrder in searchVM.list"]');
-	    // browser.debug();
 	    expect($$('[class="item-text ng-binding"]').filter(
 		x => x.getText() === checkoutInfo.productOffering).length).not.toBe(0); // check offering addition
-	    // browser.debug();
 	    checkOrderStatus(0, "InProgress");
 	    browser.reload(); // close session again
 	    browser.url(proxy_location);
@@ -725,10 +691,10 @@ describe('Integration tests', function () {
 	    browser.click('[ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))"]'); // accept
 	    browser.pause(1000);
 	    browser.click('[ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))"]'); // mark delivered
-	    // browser.debug();
 	    browser.pause(2000);
 	    checkOrderStatus(0, "Completed");
-	    browser.debug();
+	    browser.click('[href="#/inventory/product-order/1"]'); // click product order (this should be in a function!)
+	    // PENDING: check fields in product order
         });
     });
 });
