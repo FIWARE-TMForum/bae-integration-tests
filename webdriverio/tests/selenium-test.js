@@ -82,7 +82,7 @@ describe('Integration tests', function () {
     }
     
     function restartMongo() {
-	var mongocmd = 'mongorestore --host mongo.docker --drop --dir=/app/tests/mongodump/tc1';
+	var mongocmd = 'mongo --host mongo.docker /app/tests/mongodump/dropall.js';
 
 	return new Promise(function(resolve, reject) {
             exec(mongocmd, function(error, stdout, stderr) {
@@ -198,6 +198,10 @@ describe('Integration tests', function () {
                 }
             });
         }
+
+	function checkOrderStatus(ind, status) {
+	    expect($$('[ng-repeat="productOrder in searchVM.list"]')[ind].$('[class="panel-heading"]').$$('[class="order-title-info ng-binding"]').filter(x => x.getText() === status).length).toBe(1);
+	}
 
         function updateStatus(status) {
             browser.click('.status-' + status);
@@ -318,7 +322,7 @@ describe('Integration tests', function () {
             processForm(prodSpec.general);
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 2: bundle [PENDING]
-            // browser.debug();
+            // browser.debug(); 
             if(Object.keys(prodSpec.bundle).length !== 0) {
                 // do things with bundle
             }
@@ -413,7 +417,7 @@ describe('Integration tests', function () {
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 6: price plans
             // browser.debug();
-            if(Object.keys(prodOff.pricePlans) !== 0) {
+            if(Object.keys(prodOff.pricePlans).length !== 0) {
                 prodOff.pricePlans.forEach( pp => {
                     browser.click('[ng-click="createVM.pricePlanEnabled = true"]'); // new price plan
                     browser.pause(500);
@@ -441,6 +445,14 @@ describe('Integration tests', function () {
             // browser.debug();
             browser.click('[ng-click="createVM.create()"]');
         }
+
+	function confirmCheckout(checkout) {
+	    browser.pause(500);
+	    processForm(checkout.form);
+	    clickInTr(checkout.shippingAddressEmail);
+	    browser.waitForEnabled('[ng-click="orderVM.makeOrder()"]');
+	    browser.click('[ng-click="orderVM.makeOrder()"]');
+	}
 
         /*
           As far as i know, these test must be passed in this order as they emulate user possible actions.
@@ -618,20 +630,21 @@ describe('Integration tests', function () {
                 productSpec: "prodSpec1",
                 catalogue: "Product Catalog 1",
                 categories: ["parentCat"],
-                pricePlans: [{ name: { val: "Standard payment", kbd: true },
-                               paymentType: { val: "ONE TIME", kbd: false },
-                               taxIncludedAmount: { val: "3", kbd: true },
-                               description: { val: "Standard product payment", kbd: true },
-                               priceAlteration: { val: "None", kbd: false},
-                               currency: { val: "(BRL) Brazil Real", kbd: false}
-                             }],
+		pricePlans: {},
+                // pricePlans: [{ name: { val: "Standard payment", kbd: true },
+                //                paymentType: { val: "ONE TIME", kbd: false },
+                //                taxIncludedAmount: { val: "3", kbd: true },
+                //                description: { val: "Standard product payment", kbd: true },
+                //                priceAlteration: { val: "None", kbd: false},
+                //                currency: { val: "(BRL) Brazil Real", kbd: false}
+                //              }],
                 RSModel: "defaultRevenue"
             };
 
             productOfferingCreation(productOffering1);
             waitForPopUp();
             updateStatus("launched");
-            browser.debug();
+            // browser.debug();
 
             browser.reload(); // close session
             browser.url(proxy_location);
@@ -643,7 +656,7 @@ describe('Integration tests', function () {
 
             checkLogin(userNormal, 'test1', done);
 
-            browser.debug();
+            // browser.debug();
             browser.waitForExist(".dropdown-toggle.has-stack");
 	    browser.pause(500);
             browser.click('[ng-click="user.order(offering)"]');
@@ -680,16 +693,42 @@ describe('Integration tests', function () {
             var checkoutInfo = {
                 form: {
                     'ext-id': { val: "My first checkout!", kbd: true },
-                    priority: { val: '3', kbd: false },
+                    priority: { val: '"3"', kbd: false },
                     description: { val: "I need this product because reasons", kbd: true },
-                    note: { val: "I hope this product that cost me 3 BRAZIL REALS will be worthy", kbd: true },
+                    note: { val: "It's free (real estate)", kbd: true },
                 },
 		shippingAddressEmail: shipAdd2.emailAddress.val,
 		productOffering: productOffering1.general.name.val
             };
 
+	    // browser.debug();
+	    confirmCheckout(checkoutInfo);
+	    browser.waitForVisible('[class="alert alert-info text-center"]'); // wait for checkout procesing
+	    browser.click('[ui-sref="inventory.productOrder"]'); // click product orders
+	    browser.waitForVisible('[ng-repeat="productOrder in searchVM.list"]');
+	    // browser.debug();
+	    expect($$('[class="item-text ng-binding"]').filter(
+		x => x.getText() === checkoutInfo.productOffering).length).not.toBe(0); // check offering addition
+	    // browser.debug();
+	    checkOrderStatus(0, "InProgress");
+	    browser.reload(); // close session again
+	    browser.url(proxy_location);
+
+	    // ------------------ PRODUCT OFFERING CHECKOUT CONFIRMATION ---------------------------
+
+	    checkLogin(userProvider, 'admin', done);
+	    browser.waitForVisible('[ui-sref="inventory"]');
+	    $$('[ui-sref-active="active"]')[1].click(); // click inventory
+	    browser.click('[ui-sref="inventory.productOrder"]'); // click inventory product order
+	    browser.click('[ui-sref="inventory.productOrder({ role: \'Seller\' })"]'); // click "received"
+	    browser.pause(500);
+	    browser.click('[ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))"]'); // accept
+	    browser.pause(1000);
+	    browser.click('[ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))"]'); // mark delivered
+	    // browser.debug();
+	    browser.pause(2000);
+	    checkOrderStatus(0, "Completed");
 	    browser.debug();
-	    
         });
     });
 });
