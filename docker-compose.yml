@@ -11,6 +11,8 @@ services:
             - 127.0.0.1:27017:27017
         networks:
             idm_network:
+              aliases:
+                - mongo.docker
         volumes:
           - ./../mongo-data:/data/db
 
@@ -172,6 +174,23 @@ services:
               aliases:
                 - firefox.docker
 
+        # chrome:
+    #     image: selenium/node-chrome-debug
+    #     ports:
+    #         - 127.0.0.1:5901:5901
+    #     environment:
+    #         - HUB_PORT_4444_TCP_ADDR=hub.docker
+    #         - HUB_PORT_4444_TCP_PORT=4444
+    #     links:
+    #         - proxy
+    #         - mysql
+    #         - apis
+    #         - hub
+    #     networks:
+    #         idm_network:
+    #           aliases:
+    #             - chrome.docker
+                
     mysql-idm:
         image: mysql/mysql-server:5.7.21
         ports:
@@ -205,19 +224,3 @@ networks:
             config:
                 - subnet: 172.28.1.0/24
                   gateway: 172.28.1.1
-    # chrome:
-    #     image: selenium/node-chrome-debug
-    #     ports:
-    #         - 127.0.0.1:5901:5901
-    #     environment:
-    #         - HUB_PORT_4444_TCP_ADDR=hub.docker
-    #         - HUB_PORT_4444_TCP_PORT=4444
-    #     links:
-    #         - proxy
-    #         - mysql
-    #         - apis
-    #         - hub
-    #     networks:
-    #         idm_network:
-    #           aliases:
-    #             - chrome.docker
