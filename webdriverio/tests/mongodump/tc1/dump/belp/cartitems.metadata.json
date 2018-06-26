@@ -1,1 +1,0 @@
-{"options":{},"indexes":[{"v":1,"key":{"_id":1},"name":"_id_","ns":"belp.cartitems"},{"v":1,"unique":true,"key":{"user":1,"itemId":1},"name":"user_1_itemId_1","ns":"belp.cartitems","background":true}]}
