@@ -5,7 +5,7 @@ This compose YAML is very similar to the one given in [[https://github.com/FIWAR
 all matters concerning the ecosystem, but the following differences are present:
  - First of all, the docker network is defined as ~idm_network~, so be sure your other docker images are not using that subnet.
  - In order to select the web browser you need to comment the one you are not using (both in the image specs and in the hub links) and discomment the one you want to
-   use in the hub links.
+   use in the hub links. Also, you need to modify the ~webdriverio/wdio.config.js~ file and write ~chrome~ or ~firefox~ as ~browserName~.
  - In this YAML we also add the new IdM, with its own SQL database, so _ensure all the users in the test cases are created before running wdio_.
 
 To run wdio simply execute ~docker-compose run webdriverio wdio~.
