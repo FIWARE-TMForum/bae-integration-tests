@@ -174,10 +174,10 @@ services:
               aliases:
                 - firefox.docker
 
-        # chrome:
+    # chrome:
     #     image: selenium/node-chrome-debug
     #     ports:
-    #         - 127.0.0.1:5901:5901
+    #         - 127.0.0.1:5901:5900
     #     environment:
     #         - HUB_PORT_4444_TCP_ADDR=hub.docker
     #         - HUB_PORT_4444_TCP_PORT=4444

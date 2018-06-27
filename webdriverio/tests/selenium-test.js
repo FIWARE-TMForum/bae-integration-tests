@@ -152,27 +152,28 @@ describe('Integration tests', function () {
 
         function processForm(form) {
             Object.keys(form).forEach( x => {
-                if (form[x].kbd) {
+                if (form[x].inputType === 'set') {
                     $$('[name=' + x + ']').filter(x => x.isVisible())[0].setValue(form[x].val);
+                } else if (form[x].inputType === 'click') {
+                    $$('[value="' + form[x].val + '"]').filter(x => x.isVisible())[0].click();
                 } else {
-                    $$('[value=' + form[x].val + ']').filter(x => x.isVisible())[0].click();
-                }
+		    $$('[name=' + x + ']').filter(x => x.isVisible())[0].click();
+		    $$('[name=' + x + ']').filter(x => x.isVisible())[0].keys(form[x].val);
+		}
             });
         }
 
         function checkForm(form) {
             Object.keys(form).forEach( fieldName => {
-                if (form[fieldName].kbd) {
+                if (form[fieldName].inputType === 'set') {
                     expect($('[name=' + fieldName + ']').getValue()).toBe(form[fieldName].val);
-                } else {
-                    expect($('[value=' + form[fieldName].val + ']').isSelected()).toBe(true);
+                } else if (form[fieldName].inputType === 'click') {
+                    expect($('[value="' + form[fieldName].val + '"]').isSelected()).toBe(true);
                 }
             });
         }
 
         function clickInTr(clickable) {
-            // browser.debug();
-            // browser.waitForEnabled($('tbody').elements('tr').value)
             var candidates = $('tbody').elements('tr').value; // every tr in the page
             candidates.forEach((trs, index) => {
                 if(trs.elements('td').value[0].getText() === clickable) // we are clicking by name so index 0
@@ -185,9 +186,8 @@ describe('Integration tests', function () {
         }
 
         function checkFormModalContent(form) {
-            // browser.debug();
             Object.keys(form).every( fieldName => {
-                if (form[fieldName].kbd && fieldName !== 'number'){ // remove this when #22 issue is fixed
+                if (form[fieldName].inputType === 'set' && fieldName !== 'number'){ // remove this when #22 issue is fixed
                     expect($$('.modal-content input').some(
                         elem => elem.getAttribute('name') === fieldName && elem.isVisible()
                     )).toBe(true);
@@ -267,21 +267,21 @@ describe('Integration tests', function () {
 
             checkFormModalContent(busAdd);
 
-            browser.click('/html/body/div[9]/div/div/div[3]/a[2]'); // click "cancel"
+	    $$('[data-dismiss="modal"]').filter(x => x.elements().value[0].getText() ===  'Cancel')[0].click(); // click cancel
             browser.pause(fadeTime);
         };
 
         function profileUpdate(profileInfo) {
-            browser.waitForExist('[name=firstName]');
-
+	    browser.pause(1000);
             processForm(profileInfo);
 
             browser.click('[ng-click="updateVM.update()"]'); // update
 	    waitForPopUp();
             // Check update
             browser.click('.dropdown-toggle.has-stack'); // click user button
-            browser.click('[ui-sref=settings]'); // click settings
-
+            browser.click('[ui-sref="settings"]'); // click settings
+	    browser.pause(1000);
+	    
             checkForm(profileInfo);
         }
 
@@ -381,7 +381,8 @@ describe('Integration tests', function () {
             $('[ng-disabled="createVM.data.isBundle && !createVM.bundleControl.valid"]').click(); // click next
             // step 3: product Spec selection
             $$('[placeholder="Search..."]').filter(x => x.isVisible)[0].setValue(prodOff.productSpec);
-            browser.click('[id=formSearch]'); // search spec
+            browser.click('[id="formSearch"]'); // search spec
+	    browser.pause(1000);
             clickInTh(prodOff.productSpec);
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 4: catalogue
@@ -450,17 +451,17 @@ describe('Integration tests', function () {
 	    browser.pause(15000); // really big pause 'cause glassfish is poopy and I cannot fully ensure all APIs are up by this time
 	    
             // ------------- UPDATE PROFILE ------------
-            // TODO: fix JSON format, two categories: kbd y clickable
+
             var profileInfo = {
-                firstName: { val: 'testName', kbd: true },
-                lastName: { val: 'testSurName', kbd: true },
-                title: { val: 'Mr', kbd: false },
-                maritalStatus: { val: 'Single', kbd: false },
-                gender: { val: 'Male', kbd: false },
-                nationality: { val: 'Spain', kbd: true },
-                birthDate: { val: '1980-12-12', kbd: true },
-                countryOfBirth: { val: 'ES', kbd: false },
-                placeOfBirth: { val: 'Albacete', kbd: true }
+                firstName: { val: 'testName', inputType: 'set' },
+                lastName: { val: 'testSurName', inputType: 'set' },
+                title: { val: 'Mr', inputType: 'click' },
+                maritalStatus: { val: 'Single', inputType: 'click' },
+                gender: { val: 'Male', inputType: 'click' },
+                nationality: { val: 'Spain', inputType: 'set' },
+                birthDate: { val: '12121980', inputType: 'keys' },
+                countryOfBirth: { val: 'ES', inputType: 'click' },
+                placeOfBirth: { val: 'Albacete', inputType: 'set' }
             };
 
             browser.waitForExist(".dropdown-toggle.has-stack"); // wait for page to load
@@ -471,14 +472,14 @@ describe('Integration tests', function () {
 
             // ------------ SHIPPING ADDRESS -----------
 
-            var shipAdd = {emailAddress: { val: 'shipadd@email.com', kbd: true },
-                           street: { val: 'fighter', kbd: true },
-                           postcode: {val: '1200000', kbd: true },
-                           city: { val: 'Tokyo', kbd: true },
-                           stateOrProvince: {val: 'Tokyo', kbd: true },
-                           type: { val: 'warehouse', kbd: true },
-                           number: { val: '666666666', kbd: true },
-                           country: { val: 'ES', kbd: false }
+            var shipAdd = {emailAddress: { val: 'shipadd@email.com', inputType: 'set' },
+                           street: { val: 'fighter', inputType: 'set' },
+                           postcode: {val: '1200000', inputType: 'set' },
+                           city: { val: 'Tokyo', inputType: 'set' },
+                           stateOrProvince: {val: 'Tokyo', inputType: 'set' },
+                           type: { val: 'warehouse', inputType: 'set' },
+                           number: { val: '666666666', inputType: 'set' },
+                           country: { val: 'ES', inputType: 'click' }
                           };
 
             browser.click('[ui-sref="settings.contact"]'); // click "contact mediums"
@@ -489,17 +490,17 @@ describe('Integration tests', function () {
 
             $('[ui-sref="settings.contact.business"]').click(); // click "business addresses"
 
-            var busAddresses = [{ mediumType: {val: 'Email', kbd: false},
-                                  emailAddress: {val:'testEmail@email.com', kbd: true}},
-                                { mediumType: {val: 'TelephoneNumber', kbd: false},
-                                  type: {val: 'Mobile phone', kbd: true},
-                                  number: {val: '636363636', kbd: true}},
-                                { mediumType: {val: 'PostalAddress', kbd: false},
-                                  street: {val: 'Fake St. 123', kbd: true},
-                                  postcode: {val: '1337', kbd: true },
-                                  city: {val: 'Atlantis', kbd: true},
-                                  stateOrProvince: {val: 'One of them', kbd: true},
-                                  country: {val: 'BS', kbd: false}
+            var busAddresses = [{ mediumType: {val: 'Email', inputType: 'click'},
+                                  emailAddress: {val:'testEmail@email.com', inputType: 'set'}},
+                                { mediumType: {val: 'TelephoneNumber', inputType: 'click'},
+                                  type: {val: 'Mobile phone', inputType: 'set'},
+                                  number: {val: '636363636', inputType: 'set'}},
+                                { mediumType: {val: 'PostalAddress', inputType: 'click'},
+                                  street: {val: 'Fake St. 123', inputType: 'set'},
+                                  postcode: {val: '1337', inputType: 'set' },
+                                  city: {val: 'Atlantis', inputType: 'set'},
+                                  stateOrProvince: {val: 'One of them', inputType: 'set'},
+                                  country: {val: 'BS', inputType: 'click'}
                                 }];
 
             busAddresses.forEach((busAdd, index) => {
@@ -507,24 +508,25 @@ describe('Integration tests', function () {
             });
 
             // ------------------- CATEGORY CREATION -----------------
-
+	    
+	    browser.pause(500);
             browser.click('.dropdown-toggle.has-stack'); // click user button
-            browser.waitForEnabled('[ui-sref=admin]');
-            browser.click('[ui-sref=admin]'); // go to category creation
+            browser.waitForEnabled('[ui-sref="admin"]');
+            browser.click('[ui-sref="admin"]'); // go to category creation
             browser.click('[ui-sref="admin.productCategory.create"]'); // click "create"
 
-            var parentCat = { name: { val: "parentCat", kbd: true},
-                              description: { val: "This category is the son of grampaCat", kbd: true}
+            var parentCat = { name: { val: "parentCat", inputType: 'set'},
+                              description: { val: "This category is the son of grampaCat", inputType: 'set'}
                             };
-            var childCat = { name: { val: "childCat", kbd: true},
-                             description: { val: "This category is the little son of parentCat", kbd: true}
+            var childCat = { name: { val: "childCat", inputType: 'set'},
+                             description: { val: "This category is the little son of parentCat", inputType: 'set'}
                            };
 
-            categoryCreation(parentCat, {child: { val: false }});
+            categoryCreation(parentCat, { child: { val: false }});
             browser.click('[ui-sref="admin.productCategory"]'); // go to list
             browser.click('[ui-sref="admin.productCategory.create"]'); // click "create"
 
-            categoryCreation(childCat, {child: { val: true, parent: "parentCat" }});
+            categoryCreation(childCat, { child: { val: true, parent: "parentCat" }});
 
             browser.click('a.btn.btn-default'); // go to homepage
             browser.waitForEnabled('.bg-view3'); // wait for "My Stock" and click
@@ -534,12 +536,12 @@ describe('Integration tests', function () {
 
             // ---------------------- CATALOG CREATION --------------------------
 
-            var catalog1 = { name: { val: "Product Catalog 1" , kbd: true},
-                             description: { val: "There's not much to say about catalogs anyway", kbd: true}
+            var catalog1 = { name: { val: "Product Catalog 1" , inputType: 'set'},
+                             description: { val: "There's not much to say about catalogs anyway", inputType: 'set'}
                            };
 
-            var catalog2 = { name: { val: "Product Catalog 2" , kbd: true},
-                             description: { val: "This is about to be OBSOLETE", kbd: true}
+            var catalog2 = { name: { val: "Product Catalog 2" , inputType: 'set'},
+                             description: { val: "This is about to be OBSOLETE", inputType: 'set'}
                            };
 
             catalogCreation(catalog1);
@@ -562,24 +564,24 @@ describe('Integration tests', function () {
             // ---------------------- PRODUCT SPEC CREATION --------------------
 
             var productSpec1 = {
-                general: { name: { val: "prodSpec1", kbd: true },
-                           version: { val: "0.01", kbd: true },
-                           brand: { val: "FIWARE Lab", kbd: true },
-                           productNumber: { val: "1", kbd: true },
-                           description: { val: "Test Case 1 only product spec", kbd: true }},
+                general: { name: { val: "prodSpec1", inputType: 'set' },
+                           version: { val: "0.01", inputType: 'set' },
+                           brand: { val: "FIWARE Lab", inputType: 'set' },
+                           productNumber: { val: "1", inputType: 'set' },
+                           description: { val: "Test Case 1 only product spec", inputType: 'set' }},
                 bundle: {}, // bundle
                 digitalAssets: {}, // digital asset
-                characteristics: [{ generalForm: { name: { val: "characteristic", kbd: true },
-                                                   valueType: { val: "number", kbd: false },
-                                                   description: {val: "does something, dunno what", kbd: true }},
-                                    values: [{ value: { val: "9", kbd: true },
-                                               unitOfMeasure: { val: "somethings", kbd: true }}]
+                characteristics: [{ generalForm: { name: { val: "characteristic", inputType: 'set' },
+                                                   valueType: { val: "number", inputType: 'click' },
+                                                   description: {val: "does something, dunno what", inputType: 'set' }},
+                                    values: [{ value: { val: "9", inputType: 'set' },
+                                               unitOfMeasure: { val: "somethings", inputType: 'set' }}]
                                   }], // characteristics
-                attachments: { pictureProvide: { val: "url", kbd: false },
-                               picture: { val: "https://www.fiware.org//wp-content/uploads/2017/12/logo1.gif", kbd: true }}, // check upload
+                attachments: { pictureProvide: { val: "url", inputType: 'click' },
+                               picture: { val: "https://www.fiware.org//wp-content/uploads/2017/12/logo1.gif", inputType: 'set' }}, // check upload
                 relationships: {},
-                terms: { title: { val: "EULA", kbd: true },
-                         text: { val: "do you agree?", kbd: true }
+                terms: { title: { val: "EULA", inputType: 'set' },
+                         text: { val: "do you agree?", inputType: 'set' }
                        }
             };
 
@@ -593,9 +595,9 @@ describe('Integration tests', function () {
 
             // ---------------------- PRODUCT OFFERING CREATION ----------------
             var productOffering1 = {
-                general: { name: { val: "prodOff1", kbd: true },
-                           version: { val: "0.5", kbd: true },
-                           description: { val: "Test Case 1 only product offering", kbd: true },
+                general: { name: { val: "prodOff1", inputType: 'set' },
+                           version: { val: "0.5", inputType: 'set' },
+                           description: { val: "Test Case 1 only product offering", inputType: 'set' },
                          },
                 places: ["parts unknown"], // this is inside general but outside processForm
                 bundle: {}, // bundle
@@ -603,12 +605,12 @@ describe('Integration tests', function () {
                 catalogue: "Product Catalog 1",
                 categories: ["parentCat"],
 		pricePlans: {},
-                // pricePlans: [{ name: { val: "Standard payment", kbd: true },
-                //                paymentType: { val: "ONE TIME", kbd: false },
-                //                taxIncludedAmount: { val: "3", kbd: true },
-                //                description: { val: "Standard product payment", kbd: true },
-                //                priceAlteration: { val: "None", kbd: false},
-                //                currency: { val: "(BRL) Brazil Real", kbd: false}
+                // pricePlans: [{ name: { val: "Standard payment", inputType: 'set' },
+                //                paymentType: { val: "ONE TIME", inputType: 'click' },
+                //                taxIncludedAmount: { val: "3", inputType: 'set' },
+                //                description: { val: "Standard product payment", inputType: 'set' },
+                //                priceAlteration: { val: "None", inputType: 'click'},
+                //                currency: { val: "(BRL) Brazil Real", inputType: 'click'}
                 //              }],
                 RSModel: "defaultRevenue"
             };
@@ -641,14 +643,14 @@ describe('Integration tests', function () {
             browser.click('[ui-sref=settings]'); // click settings
 
             var shipAdd2 = {
-                emailAddress: { val: 'shipadd2@email.com', kbd: true },
-                street: { val: 'fighter alpha II', kbd: true },
-                postcode: {val: '1200000', kbd: true },
-                city: { val: 'Tokyo', kbd: true },
-                stateOrProvince: {val: 'Tokyo', kbd: true },
-                type: { val: 'warehouse', kbd: true },
-                number: { val: '666666666', kbd: true },
-                country: { val: 'ES', kbd: false }
+                emailAddress: { val: 'shipadd2@email.com', inputType: 'set' },
+                street: { val: 'fighter alpha II', inputType: 'set' },
+                postcode: {val: '1200000', inputType: 'set' },
+                city: { val: 'Tokyo', inputType: 'set' },
+                stateOrProvince: {val: 'Tokyo', inputType: 'set' },
+                type: { val: 'warehouse', inputType: 'set' },
+                number: { val: '666666666', inputType: 'set' },
+                country: { val: 'ES', inputType: 'click' }
             };
 
             browser.click('[ui-sref="settings.contact"]'); // click "contact mediums"
@@ -661,10 +663,10 @@ describe('Integration tests', function () {
 
             var checkoutInfo = {
                 form: {
-                    'ext-id': { val: "My first checkout!", kbd: true },
-                    priority: { val: '"3"', kbd: false },
-                    description: { val: "I need this product because reasons", kbd: true },
-                    note: { val: "It's free (real estate)", kbd: true },
+                    'ext-id': { val: "My first checkout!", inputType: 'set' },
+                    priority: { val: '3', inputType: 'click' },
+                    description: { val: "I need this product because reasons", inputType: 'set' },
+                    note: { val: "It's free (real estate)", inputType: 'set' },
                 },
 		shippingAddressEmail: shipAdd2.emailAddress.val,
 		productOffering: productOffering1.general.name.val
