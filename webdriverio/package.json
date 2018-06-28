@@ -1,0 +1,23 @@
+{
+  "name": "webdriverIO",
+  "version": "1.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "chai": "4.1.2",
+    "cucumber": "4.2.1",
+    "jasmine-core": "3.1.0",
+    "mocha": "5.1.0",
+    "sinon": "4.5.0",
+    "wdio-mocha-framework": "0.2.12",
+    "wdio-spec-reporter": "0.1.4",
+    "webdriverio": "4.12.0",
+    "css-xpath": "1.0.0",
+    "icu-loader": "4.0.0",
+    "webdrivercss": "1.1.10",
+    "webdriverrtc": "1.0.0",
+    "mysql": "2.15.0"
+  },
+  "devDependencies": {
+      "wdio-jasmine-framework": "^0.3.2"
+  }
+}

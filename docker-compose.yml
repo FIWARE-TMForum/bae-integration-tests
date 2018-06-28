@@ -1,0 +1,226 @@
+version: "2"
+
+volumes:
+  vol-mysql:
+
+services:
+    mongo:
+        image: mongo:3.2
+        restart: always
+        ports:
+            - 127.0.0.1:27017:27017
+        networks:
+            idm_network:
+              aliases:
+                - mongo.docker
+        volumes:
+          - ./../mongo-data:/data/db
+
+    mysql:
+        image: mysql:5.7.16
+        restart: always
+        ports:
+            - 127.0.0.1:3333:3306
+        environment:
+            - MYSQL_ROOT_PASSWORD=my-secret-pw
+            - MYSQL_HOST=mysql
+            - MYSQL_DATABASE=mains
+        volumes:
+            - ./../mysql-data:/var/lib/mysql
+        networks:
+            idm_network:
+
+    apis:
+        image: conwetlab/biz-ecosystem-apis:develop
+        restart: always
+        ports:
+            - 127.0.0.1:4848:4848
+            - 127.0.0.1:8080:8080
+        links:
+            - mysql
+        depends_on:
+            - mysql
+        networks:
+            idm_network:
+                aliases:
+                    - apis.docker
+        environment:
+            - MYSQL_ROOT_PASSWORD=my-secret-pw
+            - MYSQL_HOST=mysql
+        volumes:
+            - ./asadminpw:/asadminpw
+        entrypoint: /asadminpw/apis-remote-server-entrypoint.sh
+
+    proxy:
+        image: conwetlab/biz-ecosystem-logic-proxy:develop
+        restart: always
+        links:
+            - mongo
+        depends_on:
+            - mongo
+            - apis
+        ports:
+            - 127.0.0.1:8004:8000
+        networks:
+            idm_network:
+                aliases:
+                    - proxy.docker
+                ipv4_address: 172.28.1.80
+                  
+        volumes:
+            - ./../proxy-conf:/business-ecosystem-logic-proxy/etc
+            - ./../proxy-indexes:/business-ecosystem-logic-proxy/indexes
+            - ./../proxy-themes:/business-ecosystem-logic-proxy/themes
+            - ./../proxy-static:/business-ecosystem-logic-proxy/static
+        environment:
+            - NODE_ENV=development
+
+    charging:
+        image: conwetlab/biz-ecosystem-charging-backend:develop
+        restart: always
+        links:
+            - mongo
+        depends_on:
+            - mongo
+            - apis
+            - rss
+        ports:
+            - 127.0.0.1:8006:8006
+        networks:
+            idm_network:
+                aliases:
+                    - charging.docker
+        volumes:
+            - ./../charging-bills:/business-ecosystem-charging-backend/src/media/bills
+            - ./../charging-assets:/business-ecosystem-charging-backend/src/media/assets
+            - ./../charging-plugins:/business-ecosystem-charging-backend/src/plugins
+            - ./../charging-settings:/business-ecosystem-charging-backend/src/user_settings
+            - ./../charging-inst-plugins:/business-ecosystem-charging-backend/src/wstore/asset_manager/resource_plugins/plugins
+        environment:
+          - PAYPAL_CLIENT_ID=client_id
+          - PAYPAL_CLIENT_SECRET=client_secret
+
+    rss:
+        image: conwetlab/biz-ecosystem-rss:develop
+        restart: always
+        ports:
+            - 127.0.0.1:9999:8080
+            - 127.0.0.1:4444:4848
+            - 127.0.0.1:1111:8181
+        links:
+            - mysql
+        depends_on:
+            - mysql
+        networks:
+            idm_network:
+                aliases:
+                    - rss.docker
+        volumes:
+            - ./../rss-conf:/etc/default/rss
+
+    webdriverio:
+        image: webdriverio
+        links:
+#            - chrome
+            - firefox
+            - hub
+            - proxy
+            - mysql
+            - apis
+            - mongo
+            - charging
+        networks:
+            idm_network:
+              aliases:
+                - webdriverio.docker
+        environment:
+            - HUB_PORT_4444_TCP_ADDR=hub.docker
+            - HUB_PORT_4444_TCP_PORT=4444
+            - MYSQL_ROOT_PASSWORD=my-secret-pw
+        volumes:
+            # {{replace_with_path_of_wdio.conf.js_file}}
+            # - <PATH/TO/YOUR/WEBDRIVERIO/DIR>:/app
+            - ./webdriverio:/app
+            # in order to make index cleaning easy, put the index volume from login-proxy here
+            - ./../proxy-indexes:/proxy-indexes
+            - ./asadminpw:/asadminpw
+    hub:
+        image: selenium/hub
+        ports:
+            - 127.0.0.1:6666:4444
+        networks:
+            idm_network:
+              aliases:
+                - hub.docker
+        links:
+            - proxy
+            - mysql
+            - apis
+
+    firefox:
+        image: selenium/node-firefox-debug
+        ports:
+            - 127.0.0.1:5900:5900
+        environment:
+            - HUB_PORT_4444_TCP_ADDR=hub.docker
+            - HUB_PORT_4444_TCP_PORT=4444
+        links:
+            - hub
+            - proxy
+            - mysql
+            - apis
+        networks:
+            idm_network:
+              aliases:
+                - firefox.docker
+
+    # chrome:
+    #     image: selenium/node-chrome-debug
+    #     ports:
+    #         - 127.0.0.1:5901:5900
+    #     environment:
+    #         - HUB_PORT_4444_TCP_ADDR=hub.docker
+    #         - HUB_PORT_4444_TCP_PORT=4444
+    #     links:
+    #         - proxy
+    #         - mysql
+    #         - apis
+    #         - hub
+    #     networks:
+    #         idm_network:
+    #           aliases:
+    #             - chrome.docker
+                
+    mysql-idm:
+        image: mysql/mysql-server:5.7.21
+        ports:
+            - "127.0.0.1:3406:3306"
+        networks:
+            idm_network:
+              ipv4_address: 172.28.1.5
+        volumes:
+            - vol-mysql:/var/lib/mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=idm
+            - MYSQL_ROOT_HOST=172.28.1.6
+
+    fiware-idm:
+       image: fiware/idm
+       ports:
+           - "127.0.0.1:3000:3000"
+           - "127.0.0.1:443:443"
+       networks:
+           idm_network:
+               ipv4_address: 172.28.1.6
+               aliases:
+                   - idm.docker
+       environment:
+           - DATABASE_HOST=mysql-idm
+
+networks:
+    idm_network:
+        driver: bridge
+        ipam:
+            config:
+                - subnet: 172.28.1.0/24
+                  gateway: 172.28.1.1
