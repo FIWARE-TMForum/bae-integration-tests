@@ -272,7 +272,7 @@ describe('Integration tests', function () {
         };
 
         function profileUpdate(profileInfo) {
-	    browser.pause(1000);
+	    browser.waitForVisible('[name=firstName]');
             processForm(profileInfo);
 
             browser.click('[ng-click="updateVM.update()"]'); // update
@@ -281,7 +281,8 @@ describe('Integration tests', function () {
             browser.click('.dropdown-toggle.has-stack'); // click user button
             browser.click('[ui-sref="settings"]'); // click settings
 	    browser.pause(1000);
-	    
+
+	    browser.waitForVisible('[name=firstName]');
             checkForm(profileInfo);
         }
 
