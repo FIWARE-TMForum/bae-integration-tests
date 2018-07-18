@@ -33,7 +33,8 @@ describe('Integration tests', function () {
 
     var proxy_location = 'http://proxy.docker:8004/#/offering';
 
-    const fadeTime = 160;
+    const fadeDelay = 160;
+    const standardDelay = 500;
 
     beforeAll(function(done) {
         connection.connect(function(err) {
@@ -115,14 +116,26 @@ describe('Integration tests', function () {
     describe('User.', function () {
 
         beforeAll(function() {
-            cleanSQLs().then((msg) => {
-                restartApis().then((msg) => {
-		    restartMongo().then((msg) => {
-			console.log(msg);
-			browser.url(proxy_location);
-		    });
-                });
-            });
+            cleanSQLs()
+		.then((msg) => { // 
+                    restartApis()
+			.then((msg) => {
+			    restartMongo()
+				.then((msg) => {
+				    console.log(msg);
+				    browser.url(proxy_location);
+				}).catch(err => {
+				    console.log("ERROR WHILE RESTARTING MONGO: " + err);
+				    browser.end();
+				});
+			}).catch(err => {
+			    console.log("ERROR WHILE RESTARTING APIS: " + err);
+			    browser.end();
+			});
+		}).catch(err => {
+		    console.log("ERROR WHILE RESTARTING SQL: " + err);
+		    browser.end();
+		});
         });
 
         afterAll(function(done) {
@@ -249,7 +262,7 @@ describe('Integration tests', function () {
             browser.waitUntil(function() {
                 return $('[ng-controller="CustomerUpdateCtrl as updateVM"]').isVisible() === false;
             }, 5000, "obscured...", 500);
-            browser.pause(fadeTime); // this is like very rubbish but IDGAF (fade time: 0.15s)
+            browser.pause(fadeDelay); // this is like very rubbish but IDGAF (fade time: 0.15s)
         };
 
         function businessAddressCreation(busAdd, count) {
@@ -268,7 +281,7 @@ describe('Integration tests', function () {
             checkFormModalContent(busAdd);
 
 	    $$('[data-dismiss="modal"]').filter(x => x.elements().value[0].getText() ===  'Cancel')[0].click(); // click cancel
-            browser.pause(fadeTime);
+            browser.pause(fadeDelay);
         };
 
         function profileUpdate(profileInfo) {
@@ -334,7 +347,7 @@ describe('Integration tests', function () {
             if(Object.keys(prodSpec.characteristics).length !== 0) {
                 prodSpec.characteristics.forEach(char => {
                     browser.click('[ng-click="createVM.characteristicEnabled = true"]'); // click new characteristic
-                    browser.pause(500);
+                    browser.pause(standardDelay);
                     processForm(char.generalForm);
                     char.values.forEach( value => {
                         browser.waitForEnabled('[name=value]');
@@ -368,7 +381,7 @@ describe('Integration tests', function () {
 
         function productOfferingCreation(prodOff) {
             // step 1: general
-            browser.pause(500);
+            browser.pause(standardDelay);
             processForm(prodOff.general);
             prodOff.places.forEach( x => {
                 $('[name=place]').setValue(x);
@@ -390,18 +403,18 @@ describe('Integration tests', function () {
             $$('[placeholder="Search..."]').filter(x => x.isVisible)[0].setValue(prodOff.catalogue);
             browser.click('[id=formSearch]'); // search spec
             clickInTr(prodOff.catalogue); // click spec
-            browser.pause(500);
+            browser.pause(standardDelay);
             $$('[class="ng-binding"]').filter(x => x.getText() === prodOff.catalogue)[0].click();
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 5: categories
             prodOff.categories.forEach(x => clickInTr(x)); // click categories
-            browser.pause(500);
+            browser.pause(standardDelay);
             $$('[ng-disabled="!step.form.$valid"]').filter( x => x.isVisible())[0].click(); // click next
             // step 6: price plans
             if(Object.keys(prodOff.pricePlans).length !== 0) {
                 prodOff.pricePlans.forEach( pp => {
                     browser.click('[ng-click="createVM.pricePlanEnabled = true"]'); // new price plan
-                    browser.pause(500);
+                    browser.pause(standardDelay);
                     $$('.dropdown-toggle.z-depth-0').filter(x => x.isVisible())[0].click(); // click paymentType dropdown
                     $$('[class="item-text ng-binding"]').filter(x => x.getText() === pp.paymentType.val)[0].click(); // click paymentType
                     delete pp.paymentType;
@@ -425,7 +438,7 @@ describe('Integration tests', function () {
         }
 
 	function confirmCheckout(checkout) {
-	    browser.pause(500);
+	    browser.pause(standardDelay);
 	    processForm(checkout.form);
 	    clickInTr(checkout.shippingAddressEmail);
 	    browser.waitForEnabled('[ng-click="orderVM.makeOrder()"]');
@@ -510,7 +523,7 @@ describe('Integration tests', function () {
 
             // ------------------- CATEGORY CREATION -----------------
 	    
-	    browser.pause(500);
+	    browser.pause(standardDelay);
             browser.click('.dropdown-toggle.has-stack'); // click user button
             browser.waitForEnabled('[ui-sref="admin"]');
             browser.click('[ui-sref="admin"]'); // go to category creation
@@ -630,7 +643,7 @@ describe('Integration tests', function () {
 
             checkLogin(userNormal, 'test1', done);
             browser.waitForExist(".dropdown-toggle.has-stack");
-	    browser.pause(500);
+	    browser.pause(standardDelay);
             browser.click('[ng-click="user.order(offering)"]');
             browser.waitForVisible('[class="modal-content"]');
             $$('[ng-repeat="tab in createVM.tabs"]')[1].click(); // click terms and conditions
@@ -690,7 +703,7 @@ describe('Integration tests', function () {
 	    $$('[ui-sref-active="active"]')[1].click(); // click inventory
 	    browser.click('[ui-sref="inventory.productOrder"]'); // click inventory product order
 	    browser.click('[ui-sref="inventory.productOrder({ role: \'Seller\' })"]'); // click "received"
-	    browser.pause(500);
+	    browser.pause(standardDelay);
 	    browser.click('[ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))"]'); // accept
 	    browser.pause(1000);
 	    browser.click('[ng-click="searchVM.updateStatus(productOrder, $index, searchVM.getNextStatus(orderItem))"]'); // mark delivered
